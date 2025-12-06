@@ -1,0 +1,13 @@
+[Unit]
+Description=FRE Node Dashboard
+After=network-online.target
+
+[Service]
+User=aliasvava
+WorkingDirectory=/home/aliasvava/fre_node
+Environment=PYTHONPATH=/home/aliasvava/fre_node
+ExecStart=/home/aliasvava/fre_node/venv/bin/python3 /home/aliasvava/fre_node/dashboard/dashboard.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

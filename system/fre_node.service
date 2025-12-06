@@ -1,0 +1,12 @@
+[Unit]
+Description=FRE Layer 2 Node
+After=network-online.target
+
+[Service]
+User=aliasvava
+WorkingDirectory=/home/aliasvava/fre_node
+ExecStart=/home/aliasvava/fre_node/venv/bin/python3 /home/aliasvava/fre_node/main.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

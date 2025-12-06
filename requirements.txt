@@ -1,0 +1,9 @@
+flask
+requests
+websockets
+pynacl
+urllib3
+psutil
+fastapi
+uvicorn
+jinja2

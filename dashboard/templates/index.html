@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>FRE Dashboard</title>
+
+    <!-- STYLE UI PRO -->
+    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: "Segoe UI", Roboto, sans-serif;
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: 400;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #58a6ff;
+        }
+
+        h3 {
+            color: #8b949e;
+            margin-bottom: 25px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            width: 95%;
+            margin: auto;
+        }
+
+        .card {
+            background: #161b22;
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #79c0ff;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        pre {
+            background: #0d1117;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+
+        span {
+            font-weight: bold;
+            color: #ffa657;
+        }
+
+        .footer {
+            text-align: center;
+            margin: 25px 0 10px;
+            font-size: 13px;
+            color: #6e7681;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>FRE NODE — Dashboard</h1>
+<h3>Layer 2 FRE • TON Compatible • Validator Network</h3>
+
+<div class="grid">
+
+    <!-- STATUS -->
+    <div class="card">
+        <h2>Status du Node</h2>
+        <p>Nom : <span id="node"></span></p>
+        <p>Blocs : <span id="blocks"></span></p>
+        <p>Mempool : <span id="mempool"></span></p>
+        <p>CPU : <span id="cpu"></span>%</p>
+        <p>RAM : <span id="ram"></span>%</p>
+    </div>
+
+    <!-- LATEST BLOCK -->
+    <div class="card">
+        <h2>Dernier Bloc</h2>
+        <pre id="latest_block">Chargement...</pre>
+    </div>
+
+    <!-- BALANCES -->
+    <div class="card">
+        <h2>Balances Ledger</h2>
+        <pre id="balances">Chargement...</pre>
+    </div>
+
+    <!-- MEMPOOL -->
+    <div class="card">
+        <h2>Mempool (Tx en attente)</h2>
+        <pre id="mempool_list">Chargement...</pre>
+    </div>
+
+</div>
+
+<div class="footer">
+    FRE Network © 2025 — Layer 2 Validator Dashboard
+</div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
+

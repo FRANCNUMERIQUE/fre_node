@@ -1,0 +1,11 @@
+[
+    {
+        "index": 0,
+        "timestamp": 0,
+        "txs": [],
+        "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "validator": "genesis",
+        "state_root": "",
+        "hash": "GENESIS_HASH"
+    }
+]

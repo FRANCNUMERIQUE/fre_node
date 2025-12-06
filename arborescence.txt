@@ -1,0 +1,45 @@
+fre_node/
+│
+├── main.py
+│
+├── fre_node/
+│   ├── __init__.py
+│   ├── node.py
+│   ├── config.py
+│   ├── logger.py
+│   ├── utils.py
+│   ├── wallet.py
+│   ├── block.py
+│   ├── mempool.py
+│   ├── state.py
+│   ├── consensus.py
+│   ├── ledger.py
+│   ├── validator.py
+│   ├── network.py
+│   ├── api.py
+│   └── db/
+│       ├── chain.json
+│       ├── state.json
+│       └── config.json
+│
+├── dashboard/
+│   ├── dashboard.py
+│   ├── templates/
+│   │   └── index.html
+│   └── static/
+│       ├── style.css
+│       └── script.js
+│
+├── update/
+│   ├── update_node.sh
+│   ├── install_update.sh
+│   └── README_UPDATE.md
+│
+├── system/
+│   ├── fre-node.service
+│   └── fre-dashboard.service
+│
+├── requirements.txt
+├── install.sh
+├── arborescence.txt
+└── README.md
