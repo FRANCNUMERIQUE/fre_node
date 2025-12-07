@@ -54,6 +54,10 @@ if [ -f "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" ]; then
 fi
 
 # Static IP on wlan0
+if systemctl list-unit-files | grep -q systemd-networkd.service; then
+  sudo systemctl enable --now systemd-networkd 2>/dev/null || true
+fi
+
 if systemctl is-active --quiet systemd-networkd; then
   if [ ! -f /etc/systemd/network/10-fre-hotspot.network ]; then
     cat <<'EOF' | sudo tee /etc/systemd/network/10-fre-hotspot.network >/dev/null
@@ -81,6 +85,11 @@ EOF
     sudo systemctl restart dhcpcd || true
   fi
 fi
+
+# Force address immediately on wlan0
+sudo ip addr flush dev wlan0 2>/dev/null || true
+sudo ip addr add 192.168.50.1/24 dev wlan0 2>/dev/null || true
+sudo ip link set wlan0 up 2>/dev/null || true
 
 # Reload systemd
 sudo systemctl daemon-reload

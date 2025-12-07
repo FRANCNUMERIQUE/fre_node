@@ -28,6 +28,14 @@ sudo systemctl disable wpa_supplicant@wlan0.service
 sudo rfkill unblock all
 ```
 
+## 2ter) Forcer l’adresse IP immédiatement
+Si le DHCP client reste actif, forcez l’adresse manuellement :
+```
+sudo ip addr flush dev wlan0
+sudo ip addr add 192.168.50.1/24 dev wlan0
+sudo ip link set wlan0 up
+```
+
 ## 3) hostapd (point d’accès)
 Copier et adapter `hotspot/hostapd.conf.example` vers `/etc/hostapd/hostapd.conf`, puis définir dans `/etc/default/hostapd` :
 ```
