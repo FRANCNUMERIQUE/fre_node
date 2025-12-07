@@ -21,6 +21,7 @@ sudo cp "$SCRIPT_DIR/../system/fre_dashboard.service" /etc/systemd/system/fre_da
 [ -f "$SCRIPT_DIR/../system/fre_portal.service" ] && sudo cp "$SCRIPT_DIR/../system/fre_portal.service" /etc/systemd/system/fre_portal.service
 [ -f "$SCRIPT_DIR/../system/wlan0-sta.service" ] && sudo cp "$SCRIPT_DIR/../system/wlan0-sta.service" /etc/systemd/system/wlan0-sta.service
 [ -f "$SCRIPT_DIR/../system/fre_nat.service" ] && sudo cp "$SCRIPT_DIR/../system/fre_nat.service" /etc/systemd/system/fre_nat.service
+[ -f "$SCRIPT_DIR/../system/dhclient-wlan0_sta.service" ] && sudo cp "$SCRIPT_DIR/../system/dhclient-wlan0_sta.service" /etc/systemd/system/dhclient-wlan0_sta.service
 
 # Hotspot dependencies
 echo "[INSTALL] Installing hostapd/dnsmasq/avahi/tcpdump..."
@@ -138,6 +139,7 @@ sudo systemctl enable avahi-daemon
 sudo systemctl enable wpa_supplicant@wlan0_sta.service 2>/dev/null || true
 sudo systemctl enable wlan0-sta.service 2>/dev/null || true
 sudo systemctl enable fre_nat.service 2>/dev/null || true
+sudo systemctl enable dhclient-wlan0_sta.service 2>/dev/null || true
 
 # Restart services
 sudo systemctl restart fre_node.service
@@ -149,6 +151,7 @@ sudo systemctl restart avahi-daemon
 sudo systemctl restart wlan0-sta.service 2>/dev/null || true
 sudo systemctl restart wpa_supplicant@wlan0_sta.service 2>/dev/null || true
 sudo systemctl restart fre_nat.service 2>/dev/null || true
+sudo systemctl restart dhclient-wlan0_sta.service 2>/dev/null || true
 
 echo "[INSTALL] FRE services installed and started."
 echo "[DONE] Install complete."
