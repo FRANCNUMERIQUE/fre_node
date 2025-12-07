@@ -160,19 +160,20 @@ class Ledger:
             print("[LEDGER] Invalid hash")
             return False
 
-        # producer check + signature
-        expected_producer = select_producer(blk["index"], self.validators)
-        if blk.get("validator") != expected_producer:
-            print("[LEDGER] Invalid producer")
-            return False
+        # producer check + signature (skip genesis)
+        if blk.get("index", 0) > 0:
+            expected_producer = select_producer(blk["index"], self.validators)
+            if blk.get("validator") != expected_producer:
+                print("[LEDGER] Invalid producer")
+                return False
 
-        pubkey = get_pubkey(self.validators, blk.get("validator"))
-        if not pubkey or not blk.get("block_signature"):
-            print("[LEDGER] Missing pubkey or signature")
-            return False
-        if not verify_signature_raw(pubkey, block_obj.hash.encode(), blk["block_signature"]):
-            print("[LEDGER] Invalid block signature")
-            return False
+            pubkey = get_pubkey(self.validators, blk.get("validator"))
+            if not pubkey or not blk.get("block_signature"):
+                print("[LEDGER] Missing pubkey or signature")
+                return False
+            if not verify_signature_raw(pubkey, block_obj.hash.encode(), blk["block_signature"]):
+                print("[LEDGER] Invalid block signature")
+                return False
 
         return True
 
@@ -198,12 +199,13 @@ class Ledger:
             if i > 0 and blk.get("prev_hash") != self.chain[i - 1]["hash"]:
                 raise ValueError(f"Block #{i} invalid chain link")
 
-            expected_producer = select_producer(blk["index"], self.validators)
-            if blk.get("validator") != expected_producer:
-                raise ValueError(f"Block #{i} invalid producer")
+            if blk.get("index", 0) > 0:
+                expected_producer = select_producer(blk["index"], self.validators)
+                if blk.get("validator") != expected_producer:
+                    raise ValueError(f"Block #{i} invalid producer")
 
-            pubkey = get_pubkey(self.validators, blk.get("validator"))
-            if not pubkey or not blk.get("block_signature"):
-                raise ValueError(f"Block #{i} missing pubkey or signature")
-            if not verify_signature_raw(pubkey, block_obj.hash.encode(), blk["block_signature"]):
-                raise ValueError(f"Block #{i} invalid block signature")
+                pubkey = get_pubkey(self.validators, blk.get("validator"))
+                if not pubkey or not blk.get("block_signature"):
+                    raise ValueError(f"Block #{i} missing pubkey or signature")
+                if not verify_signature_raw(pubkey, block_obj.hash.encode(), blk["block_signature"]):
+                    raise ValueError(f"Block #{i} invalid block signature")
