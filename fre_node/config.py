@@ -36,6 +36,13 @@ VALIDATOR_PUBLIC_KEY = None   # sera rempli au lancement
 VALIDATOR_PRIVATE_KEY = None  # idem
 
 # ===========================
+# TRANSACTIONS (FORMAT STRICT)
+# ===========================
+TX_VERSION = "tx_v1"
+CHAIN_ID = "fre-local"
+MIN_FEE = 1
+
+# ===========================
 # MODE DEV (validation souple)
 # ===========================
 # En mode DEV, les transactions de test peuvent passer sans adresse TON ni signature

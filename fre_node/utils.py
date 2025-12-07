@@ -4,6 +4,28 @@ import os
 from nacl.signing import SigningKey, VerifyKey
 
 # ===========================
+# CANONICAL TX MESSAGE
+# ===========================
+
+def canonical_tx_message(tx: dict) -> bytes:
+    """
+    Canonical string for signing/verifying tx_v1.
+    Order is fixed to avoid ambiguity.
+    """
+    parts = [
+        str(tx.get("version", "")),
+        str(tx.get("type", "")),
+        str(tx.get("chain_id", "")),
+        str(tx.get("timestamp", "")),
+        str(tx.get("from", "")),
+        str(tx.get("to", "")),
+        str(tx.get("amount", "")),
+        str(tx.get("fee", "")),
+        str(tx.get("nonce", "")),
+    ]
+    return "|".join(parts).encode()
+
+# ===========================
 # TON STRICT — CRC16
 # ===========================
 

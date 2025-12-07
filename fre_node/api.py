@@ -103,12 +103,18 @@ def mempool_content():
 @app.post("/tx")
 def submit_transaction(tx: dict):
     """
-    Envoie une transaction :
+    Envoie une transaction (tx_v1) :
     {
+        "version": "tx_v1",
+        "type": "transfer",
+        "chain_id": "fre-local",
+        "timestamp": 1234567890,
         "from": "...",
         "to": "...",
         "amount": 10,
-        "nonce": 2,
+        "fee": 1,
+        "nonce": 0,
+        "pubkey": "base64url...",
         "signature": "base64url..."
     }
     """

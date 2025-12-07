@@ -1,14 +1,17 @@
 import base64
 import json
+import time
 from pathlib import Path
 from typing import Dict, Any
 
 from nacl.signing import SigningKey, VerifyKey
 
+from .config import TX_VERSION, CHAIN_ID, MIN_FEE
 from .utils import (
     generate_keys,
     ton_address_from_pubkey,
     sign_message,
+    canonical_tx_message,
 )
 
 
@@ -71,25 +74,50 @@ class Wallet:
     def sign_transaction(self, tx: Dict[str, Any]) -> Dict[str, Any]:
         """
         Signe une transaction (ajoute la signature et la pubkey).
-        Le message signé suit la même concaténation que le validator.
+        Le message signé est le canonical_tx_message utilisé par le validator.
         """
-        required = ["from", "to", "amount", "nonce"]
+        required = [
+            "version",
+            "type",
+            "chain_id",
+            "timestamp",
+            "from",
+            "to",
+            "amount",
+            "fee",
+            "nonce",
+        ]
         if not all(k in tx for k in required):
-            raise ValueError(f"Transaction incomplète, champs requis: {required}")
+            raise ValueError(f"Transaction incomplete, champs requis: {required}")
 
-        message = f"{tx['from']}{tx['to']}{tx['amount']}{tx['nonce']}".encode()
         tx = dict(tx)
-        tx["signature"] = sign_message(self.signing_key, message)
         tx["pubkey"] = _b64url(bytes(self.verify_key))
+        message = canonical_tx_message(tx)
+        tx["signature"] = sign_message(self.signing_key, message)
         return tx
 
-    def create_tx(self, to: str, amount: int, nonce: int) -> Dict[str, Any]:
+    def create_tx(
+        self,
+        to: str,
+        amount: int,
+        nonce: int,
+        tx_type: str = "transfer",
+        fee: int = None,
+        timestamp: int = None,
+        chain_id: str = None,
+        version: str = None,
+    ) -> Dict[str, Any]:
         base_tx = {
+            "version": version or TX_VERSION,
+            "type": tx_type,
+            "chain_id": chain_id or CHAIN_ID,
+            "timestamp": timestamp or int(time.time()),
             "from": self.address,
             "to": to,
             "amount": amount,
+            "fee": fee if fee is not None else MIN_FEE,
             "nonce": nonce,
             "signature": "",
+            "pubkey": "",
         }
         return self.sign_transaction(base_tx)
-

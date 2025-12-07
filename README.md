@@ -1,66 +1,71 @@
 FRE Node
 ========
 
-Minimal FRE node: FastAPI API + simple PoA loop + FastAPI/Jinja2 dashboard.
+Node FRE minimal pour démo/dev : API FastAPI, boucle consensus PoA simplifiée, dashboard FastAPI/Jinja2.
 
-Prerequisites
--------------
+Prérequis
+---------
 - Python 3.10+
-- systemd (for fre_node.service and fre_dashboard.service)
+- systemd (fre_node.service, fre_dashboard.service)
 - git
 
-Quick install (Linux)
----------------------
-```bash
-git clone https://github.com/FRANCNUMERIQUE/fre_node.git
-cd fre_node
-bash install.sh
-```
-`install.sh` creates a venv, installs deps, writes systemd units, enables and starts `fre_node.service` and `fre_dashboard.service`.
+Installation rapide (Linux)
+---------------------------
+1) Cloner et lancer l’install :
+   - `git clone https://github.com/FRANCNUMERIQUE/fre_node.git`
+   - `cd fre_node`
+   - `bash install.sh`
 
-Environment vars (before `bash install.sh`):
-- `NODE_DIR`    : repo path (default = current dir)
-- `PYTHON_BIN`  : python binary (default = python3)
-- `VENV_DIR`    : venv path (default = $NODE_DIR/venv)
-- `SERVICE_USER`: systemd user (default = current/sudo user)
+`install.sh` crée le venv, installe les dépendances, écrit/active/démarre `fre_node.service` et `fre_dashboard.service`.
 
-Systemd services
+Variables utiles (avant `bash install.sh`) :
+- `NODE_DIR`    : chemin du dépôt (défaut = courant)
+- `PYTHON_BIN`  : binaire python (défaut = python3)
+- `VENV_DIR`    : venv (défaut = $NODE_DIR/venv)
+- `SERVICE_USER`: utilisateur systemd (défaut = user courant / sudo)
+
+Services systemd
 ----------------
-```bash
-sudo systemctl status fre_node.service
-sudo systemctl status fre_dashboard.service
-```
-API: http://<ip>:8500  
-Dashboard: http://<ip>:8080
+- Statut : `sudo systemctl status fre_node.service` et `sudo systemctl status fre_dashboard.service`
+- API : http://<ip>:8500
+- Dashboard : http://<ip>:8080
 
 Diagnostic
 ----------
-```bash
-bash diagnose.sh
-```
-Checks services, API, blockchain, ledger, mempool, port, dashboard (HTTP codes).
+- `bash diagnose.sh`
+  - Vérifie services, API, blockchain, ledger, mempool, port, dashboard (codes HTTP).
 
-Test transactions (dev mode)
-----------------------------
-Validator accepts test TX when `FRE_DEV_MODE=true` (default). Initial nonce = 0.
-```bash
-curl -X POST http://127.0.0.1:8500/tx \
-  -H "Content-Type: application/json" \
-  -d '{"from":"alice","to":"bob","amount":10,"nonce":0,"signature":"test"}'
-```
-After a block is mined (every 5s if mempool not empty), sender nonce moves to 1.
+Transactions de test (mode dev)
+-------------------------------
+- Le validator accepte des TX de test si `FRE_DEV_MODE=true` (défaut). Nonce initial = 0.
+- Format `tx_v1` attendu :
+  ```json
+  {
+    "version": "tx_v1",
+    "type": "transfer",
+    "chain_id": "fre-local",
+    "timestamp": 1234567890,
+    "from": "<address>",
+    "to": "<address>",
+    "amount": 10,
+    "fee": 1,
+    "nonce": 0,
+    "pubkey": "<base64url ed25519>",
+    "signature": "<base64url>"
+  }
+  ```
+- Exemple rapide (dev, signature factice) :
+  - `curl -X POST http://127.0.0.1:8500/tx -H "Content-Type: application/json" -d '{"version":"tx_v1","type":"transfer","chain_id":"fre-local","timestamp":1700000000,"from":"alice","to":"bob","amount":10,"fee":1,"nonce":0,"pubkey":"test","signature":"test"}'`
+- La boucle produit un bloc toutes les 5 s si la mempool n’est pas vide ; le nonce de l’émetteur passe alors à 1.
 
 Wallet helper
 -------------
-`fre_node/wallet.py` to generate a wallet and sign a transaction:
-```python
-from fre_node.wallet import Wallet
-w = Wallet.create()
-w.save("wallet.json")
-tx = w.create_tx(to="dest_address", amount=10, nonce=0)
-print(tx)
-```
+- `fre_node/wallet.py` permet de générer et signer une transaction.
+- Exemple (Python) :
+  - `from fre_node.wallet import Wallet`
+  - `w = Wallet.create(); w.save("wallet.json")`
+  - `tx = w.create_tx(to="dest_address", amount=10, nonce=0)`
 
-Automatic updates (cron)
-------------------------
-`update/install_update.sh` installs a cron (every 10 minutes) calling `update/update_node.sh` to fetch/pip install/restart with backup.
+Mises à jour automatiques (cron)
+--------------------------------
+- `update/install_update.sh` installe un cron (toutes les 10 min) qui appelle `update/update_node.sh` (git pull, pip install, restart, backup).

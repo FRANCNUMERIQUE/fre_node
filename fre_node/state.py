@@ -97,21 +97,24 @@ class State:
         sender = tx["from"]
         receiver = tx["to"]
         amount = tx["amount"]
+        fee = tx.get("fee", 0)
 
         if sender not in self.balances:
             return False
 
-        if self.balances[sender] < amount:
+        total = amount + fee
+        if self.balances[sender] < total:
             return False
 
-        # Débit
-        self.balances[sender] -= amount
+        # Débit (amount + fee)
+        self.balances[sender] -= total
 
-        # Crédit
+        # Crédit destinataire (amount)
         if receiver not in self.balances:
             self.create_wallet_if_needed(receiver)
-
         self.balances[receiver] += amount
+
+        # Les fees sont brûlées (pas de redistribution dans cette version)
 
         # Mise à jour du nonce
         self.increment_nonce(sender)
