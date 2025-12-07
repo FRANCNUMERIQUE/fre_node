@@ -8,6 +8,7 @@ from .ledger import Ledger
 from .state import State
 from .config import NODE_NAME
 from .validator_set import load_validators
+from .ton_anchor import anchor_client
 
 import psutil
 import platform
@@ -105,6 +106,11 @@ def v1_address(addr: str):
 @app.get("/v1/validators")
 def v1_validators():
     return validators_list
+
+
+@app.get("/v1/anchor/status")
+def v1_anchor_status():
+    return anchor_client.status()
 
 
 @app.get("/v1/mempool")

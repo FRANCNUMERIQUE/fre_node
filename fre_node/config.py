@@ -62,3 +62,16 @@ MIN_FEE = 1
 # En mode DEV, les transactions de test peuvent passer sans adresse TON ni signature
 # stricte (utile pour les démos et tests manuels).
 DEV_MODE = os.getenv("FRE_DEV_MODE", "true").lower() in ("1", "true", "yes")
+
+
+# ===========================
+# ANCRAGE TON (placeholder)
+# ===========================
+ANCHOR_ENABLED = os.getenv("FRE_ANCHOR_ENABLED", "false").lower() in ("1", "true", "yes")
+ANCHOR_FREQUENCY_BLOCKS = int(os.getenv("FRE_ANCHOR_FREQ", "20"))
+ANCHOR_LOG_FILE = os.path.join(DATA_DIR, "anchor_log.json")
+TON_API_ENDPOINT = os.getenv("FRE_TON_API", "https://testnet.toncenter.com/api/v2/")
+TON_API_KEY = os.getenv("FRE_TON_API_KEY", "")
+ANCHOR_CONTRACT = os.getenv("FRE_ANCHOR_CONTRACT", "")
+VALIDATOR_TON_WALLET = os.getenv("FRE_TON_WALLET", "")
+VALIDATOR_TON_PRIVATE_KEY = os.getenv("FRE_TON_PRIVKEY", "")
