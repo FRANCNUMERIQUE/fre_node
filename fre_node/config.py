@@ -1,6 +1,5 @@
 import os
 import json
-import secrets
 
 # ===========================
 # CONFIGURATION PRINCIPALE
@@ -130,13 +129,11 @@ P2P_BAN_THRESHOLD = 5
 def load_admin_token():
     """
     Charge le token admin à partir de l'env ou d'un fichier local.
-    Génère un token si absent (premier démarrage) et l'écrit dans admin_token.json.
-    Le token n'est pas exposé via HTTP, seulement dans les logs/console locale.
+    Si absent, retourne une chaîne vide (l'UI devra déclencher la génération).
     """
     env_tok = os.getenv("FRE_ADMIN_TOKEN", "").strip()
     if env_tok:
         return env_tok
-    # fichier
     if os.path.exists(ADMIN_TOKEN_FILE):
         try:
             data = json.loads(open(ADMIN_TOKEN_FILE, "r").read())
@@ -145,19 +142,19 @@ def load_admin_token():
                 return tok
         except Exception:
             pass
-    # génération
-    tok = secrets.token_hex(32)
+    return ""
+
+
+def save_admin_token(token: str):
+    """Enregistre un token généré (setup) et le conserve en mémoire."""
+    global ADMIN_TOKEN
+    ADMIN_TOKEN = token
     try:
         os.makedirs(os.path.dirname(ADMIN_TOKEN_FILE), exist_ok=True)
         with open(ADMIN_TOKEN_FILE, "w") as f:
-            f.write(json.dumps({"token": tok}, indent=2))
+            f.write(json.dumps({"token": token}, indent=2))
     except Exception:
         pass
-    print("\n=== FRE NODE ADMIN TOKEN (confidentiel) ===")
-    print(tok)
-    print("Stocké localement dans", ADMIN_TOKEN_FILE)
-    print("Affichez ce token sur l'écran local ou en QR; ne le publiez pas sur le réseau.")
-    print("==========================================\n")
-    return tok
+
 
 ADMIN_TOKEN = load_admin_token()

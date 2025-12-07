@@ -1,12 +1,12 @@
 from fastapi import FastAPI, Header, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import fre_node.config as config
 from fre_node.config import API_PORT
 from .validator import Validator
 from .mempool import Mempool
 from .ledger import Ledger
 from .state import State
-from .config import NODE_NAME, ADMIN_TOKEN, VALIDATORS_FILE, VALIDATOR_SECRET_FILE
 from .validator_set import load_validators
 from .ton_anchor import anchor_client
 import subprocess
@@ -15,6 +15,7 @@ import json
 import os
 from typing import Optional
 import base64
+import secrets
 from nacl.signing import SigningKey
 
 import psutil
@@ -46,6 +47,9 @@ mempool = Mempool()
 ledger = Ledger()
 state = State()
 validators_list = load_validators()
+VALIDATORS_FILE = config.VALIDATORS_FILE
+VALIDATOR_SECRET_FILE = config.VALIDATOR_SECRET_FILE
+NODE_NAME = config.NODE_NAME
 
 # ===============================
 #         ENDPOINTS STATUS
@@ -54,7 +58,7 @@ validators_list = load_validators()
 @app.get("/status")
 def status():
     return {
-        "node": NODE_NAME,
+        "node": config.NODE_NAME,
         "blocks": ledger.count_blocks(),
         "mempool": mempool.count(),
         "latest_block": ledger.get_latest_block(),
@@ -132,9 +136,28 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 UPDATE_SCRIPT = REPO_ROOT / "update" / "update_node.sh"
 
 
+@app.get("/admin/token/status")
+def admin_token_status():
+    """Indique si un token admin est dÇ¸jÇÿ prÇ¸sent."""
+    return {"set": bool(config.ADMIN_TOKEN)}
+
+
+@app.post("/admin/token/generate")
+def admin_token_generate():
+    """
+    GÇ¸nÇ¸re un token admin unique si aucun n'est encore configurÇ¸.
+    PensÇ¸ pour le tout premier dÇ¸marrage (accÇ¸s local seulement).
+    """
+    if config.ADMIN_TOKEN:
+        return JSONResponse({"error": "token already set"}, status_code=400)
+    token = secrets.token_hex(32)
+    config.save_admin_token(token)
+    return {"status": "created", "token": token}
+
+
 @app.post("/admin/update")
 def admin_update(x_admin_token: str = Header(default="")):
-    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+    if config.ADMIN_TOKEN and x_admin_token != config.ADMIN_TOKEN:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     if not UPDATE_SCRIPT.exists():
         return JSONResponse({"error": "update script not found"}, status_code=500)
@@ -165,7 +188,7 @@ def _systemctl(cmd: list):
 
 @app.get("/admin/status")
 def admin_status(x_admin_token: str = Header(default="")):
-    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+    if config.ADMIN_TOKEN and x_admin_token != config.ADMIN_TOKEN:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
 
     services = {}
@@ -190,7 +213,7 @@ def admin_service_restart(
     payload: dict = Body(...),
     x_admin_token: str = Header(default="")
 ):
-    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+    if config.ADMIN_TOKEN and x_admin_token != config.ADMIN_TOKEN:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     service = payload.get("service")
     if service not in ("fre_node", "fre_dashboard"):
@@ -204,7 +227,7 @@ def admin_set_validator(
     payload: dict = Body(...),
     x_admin_token: str = Header(default="")
 ):
-    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+    if config.ADMIN_TOKEN and x_admin_token != config.ADMIN_TOKEN:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
 
     name = payload.get("name")
@@ -243,7 +266,7 @@ def admin_validator_info(x_admin_token: str = Header(default="")):
     Retourne les informations du validateur (nom, pubkey, stake) et l'état local (balance, nonce).
     Utilise le token d'accès (ADMIN_TOKEN) pour protéger l'appel.
     """
-    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+    if config.ADMIN_TOKEN and x_admin_token != config.ADMIN_TOKEN:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
 
     validators = load_validators()
@@ -276,7 +299,7 @@ def admin_validator_generate(x_admin_token: str = Header(default="")):
     Génère une paire de clés Ed25519 côté nœud.
     Retourne public_key / private_key en base64url.
     """
-    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+    if config.ADMIN_TOKEN and x_admin_token != config.ADMIN_TOKEN:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     key = SigningKey.generate()
     pub_b64 = base64.urlsafe_b64encode(key.verify_key.encode()).decode().rstrip("=")
@@ -293,7 +316,7 @@ def admin_wifi(
     Configure le Wi‑Fi client (wpa_supplicant) puis bascule wlan0 en mode client.
     Attention : peut couper le hotspot et l'accès actuel.
     """
-    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+    if config.ADMIN_TOKEN and x_admin_token != config.ADMIN_TOKEN:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
 
     ssid = payload.get("ssid", "").strip()
@@ -382,3 +405,4 @@ def metrics():
             "uptime_sec": time.time() - psutil.boot_time(),
         },
     }
+

@@ -1,40 +1,49 @@
 (() => {
-  // DOM references
-  const tokenInput = document.getElementById("token");
-  const saveTokenBtn = document.getElementById("saveToken");
-  const clearTokenBtn = document.getElementById("clearToken");
+  const $ = (id) => document.getElementById(id);
 
-  const valName = document.getElementById("valName");
-  const valPub = document.getElementById("valPub");
-  const valPriv = document.getElementById("valPriv");
-  const valStake = document.getElementById("valStake");
-  const valStatus = document.getElementById("valStatus");
+  // DOM
+  const tokenInput = $("token");
+  const saveTokenBtn = $("saveToken");
+  const clearTokenBtn = $("clearToken");
+  const generateTokenBtn = $("generateAdminToken");
+  const tokenModal = $("tokenModal");
+  const tokenModalInfo = $("tokenModalInfo");
+  const tokenModalInput = $("tokenModalInput");
+  const tokenModalStatus = $("tokenModalStatus");
+  const tokenModalSave = $("tokenModalSave");
+  const tokenModalCancel = $("tokenModalCancel");
 
-  const generateKeysBtn = document.getElementById("generateKeys");
-  const regenerateKeysBtn = document.getElementById("regenerateKeys");
-  const saveValidatorBtn = document.getElementById("saveValidator");
+  const valName = $("valName");
+  const valPub = $("valPub");
+  const valPriv = $("valPriv");
+  const valStake = $("valStake");
+  const valStatus = $("valStatus");
 
-  const refreshStatusBtn = document.getElementById("refreshStatus");
-  const quickStatus = document.getElementById("quickStatus");
-  const restartNodeBtn = document.getElementById("restartNode");
-  const restartDashBtn = document.getElementById("restartDash");
-  const runUpdateBtn = document.getElementById("runUpdate");
-  const actionStatus = document.getElementById("actionStatus");
-  const logOutput = document.getElementById("logOutput");
+  const generateKeysBtn = $("generateKeys");
+  const regenerateKeysBtn = $("regenerateKeys");
+  const saveValidatorBtn = $("saveValidator");
 
-  const wifiSsid = document.getElementById("wifiSsid");
-  const wifiPass = document.getElementById("wifiPass");
-  const wifiStatus = document.getElementById("wifiStatus");
-  const saveWifiBtn = document.getElementById("saveWifi");
-  const applyWifiBtn = document.getElementById("applyWifi");
+  const refreshStatusBtn = $("refreshStatus");
+  const quickStatus = $("quickStatus");
+  const restartNodeBtn = $("restartNode");
+  const restartDashBtn = $("restartDash");
+  const runUpdateBtn = $("runUpdate");
+  const actionStatus = $("actionStatus");
+  const logOutput = $("logOutput");
 
-  const tonAddr = document.getElementById("tonAddr");
-  const tonStatus = document.getElementById("tonStatus");
-  const saveTonBtn = document.getElementById("saveTon");
+  const wifiSsid = $("wifiSsid");
+  const wifiPass = $("wifiPass");
+  const wifiStatus = $("wifiStatus");
+  const saveWifiBtn = $("saveWifi");
+  const applyWifiBtn = $("applyWifi");
 
-  const rewardsBox = document.getElementById("rewardsBox");
+  const tonAddr = $("tonAddr");
+  const tonStatus = $("tonStatus");
+  const saveTonBtn = $("saveTon");
 
-  // Token storage
+  const rewardsBox = $("rewardsBox");
+
+  // Token helpers
   const loadToken = () => localStorage.getItem("fre_validator_token") || "";
   const saveToken = (t) => localStorage.setItem("fre_validator_token", t || "");
   const headers = () => {
@@ -44,13 +53,75 @@
     return h;
   };
 
-  // Helpers
   const handleResponse = async (res) => {
+    const text = await res.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch (e) { data = text; }
     if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || res.statusText);
+      const msg = (data && data.error) || (data && data.detail) || text || res.statusText;
+      throw new Error(msg);
     }
-    return res.json();
+    return data;
+  };
+
+  // Admin token flow
+  const showModal = (needsGeneration = false) => {
+    if (tokenModal) tokenModal.classList.remove("hidden");
+    if (tokenModalInput) tokenModalInput.value = loadToken();
+    if (tokenModalInfo) {
+      tokenModalInfo.textContent = needsGeneration
+        ? "Aucun token admin n'est encore defini. Generez-le pour deverrouiller le node."
+        : "Collez le token admin (non partage).";
+    }
+    if (tokenModalStatus) tokenModalStatus.textContent = "";
+    if (generateTokenBtn) generateTokenBtn.style.display = needsGeneration ? "inline-block" : "none";
+  };
+
+  const hideModal = () => {
+    if (tokenModal) tokenModal.classList.add("hidden");
+  };
+
+  const fetchTokenStatus = async () => {
+    try {
+      const data = await handleResponse(await fetch(`${apiBase}/admin/token/status`));
+      return !!data.set;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const generateAdminToken = async () => {
+    if (tokenModalStatus) tokenModalStatus.textContent = "Generation en cours...";
+    try {
+      const data = await handleResponse(await fetch(`${apiBase}/admin/token/generate`, { method: "POST" }));
+      const tok = data.token || "";
+      if (!tok) throw new Error("Token absent dans la reponse");
+      saveToken(tok);
+      if (tokenInput) tokenInput.value = tok;
+      if (tokenModalInput) tokenModalInput.value = tok;
+      if (tokenModalStatus) tokenModalStatus.textContent = "Token genere et enregistre localement.";
+      hideModal();
+      refreshStatus();
+      loadProfile();
+    } catch (e) {
+      if (tokenModalStatus) tokenModalStatus.textContent = "Erreur: " + e.message;
+    }
+  };
+
+  const ensureTokenFlow = async () => {
+    const tokenSet = await fetchTokenStatus();
+    const stored = loadToken();
+    if (!tokenSet) {
+      showModal(true);
+      return;
+    }
+    if (!stored) {
+      showModal(false);
+      return;
+    }
+    if (tokenInput) tokenInput.value = stored;
+    refreshStatus();
+    loadProfile();
   };
 
   // Status/services
@@ -69,7 +140,7 @@
   // Restart services / update
   const restartService = async (service) => {
     if (!actionStatus) return;
-    actionStatus.textContent = `Redémarrage ${service}...`;
+    actionStatus.textContent = `Redemarrage ${service}...`;
     try {
       const res = await fetch(`${apiBase}/admin/service/restart`, {
         method: "POST",
@@ -85,7 +156,7 @@
 
   const runUpdate = async () => {
     if (!logOutput) return;
-    logOutput.textContent = "Mise à jour en cours...";
+    logOutput.textContent = "Mise a jour en cours...";
     try {
       const res = await fetch(`${apiBase}/admin/update`, { method: "POST", headers: headers() });
       const data = await handleResponse(res);
@@ -135,7 +206,7 @@
       }
       if (rewardsBox) rewardsBox.textContent = JSON.stringify(data.rewards || {}, null, 2);
       if (quickStatus) quickStatus.textContent = JSON.stringify(data.validator || {}, null, 2);
-      valStatus.textContent = "Profil chargé.";
+      valStatus.textContent = "Profil charge.";
     } catch (e) {
       valStatus.textContent = "Erreur: " + e.message;
     }
@@ -144,7 +215,7 @@
   // Generate keys (local fallback to backend)
   const generateKeys = async () => {
     if (!valStatus) return;
-    valStatus.textContent = "Génération en cours...";
+    valStatus.textContent = "Generation en cours...";
     const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
     const generateLocal = async () => {
@@ -162,7 +233,7 @@
     const generateRemote = async () => {
       const res = await fetch(`${apiBase}/admin/validator/generate`, { headers: headers() });
       const data = await handleResponse(res);
-      if (!data.public_key || !data.private_key) throw new Error("Réponse invalide");
+      if (!data.public_key || !data.private_key) throw new Error("Reponse invalide");
       return { pub: data.public_key, priv: data.private_key };
     };
 
@@ -170,22 +241,22 @@
       let keys;
       try {
         keys = await generateLocal();
-        valStatus.textContent = "Clés générées localement.";
+        valStatus.textContent = "Cles generees localement.";
       } catch (e) {
         keys = await generateRemote();
-        valStatus.textContent = "Clés générées côté nœud.";
+        valStatus.textContent = "Cles generees cote noeud.";
       }
       if (valPub) valPub.value = keys.pub;
       if (valPriv) valPriv.value = keys.priv;
     } catch (e) {
-      valStatus.textContent = "Erreur génération: " + e.message;
+      valStatus.textContent = "Erreur generation: " + e.message;
     }
   };
 
   const regenerateKeys = async () => {
-    const warning = "Re-générer va invalider les clés actuelles. Sauvegardez-les avant de continuer. Continuer ?";
+    const warning = "Re-generer va invalider les cles actuelles. Sauvegardez-les avant de continuer. Continuer ?";
     if (!window.confirm(warning)) {
-      if (valStatus) valStatus.textContent = "Re-génération annulée.";
+      if (valStatus) valStatus.textContent = "Re-generation annulee.";
       return;
     }
     await generateKeys();
@@ -199,11 +270,11 @@
   const saveWifiLocal = () => {
     if (wifiSsid) localStorage.setItem("fre_wifi_ssid", wifiSsid.value.trim());
     if (wifiPass) localStorage.setItem("fre_wifi_pass", wifiPass.value);
-    if (wifiStatus) wifiStatus.textContent = "Wi‑Fi enregistré localement.";
+    if (wifiStatus) wifiStatus.textContent = "Wi-Fi enregistre localement.";
   };
   const applyWifi = async () => {
     if (!wifiStatus) return;
-    wifiStatus.textContent = "Application en cours... (le hotspot peut s'arrêter)";
+    wifiStatus.textContent = "Application en cours... (le hotspot peut s'arreter)";
     try {
       const res = await fetch(`${apiBase}/admin/wifi`, {
         method: "POST",
@@ -215,7 +286,7 @@
         })
       });
       const data = await handleResponse(res);
-      wifiStatus.textContent = data.message || "Wi‑Fi appliqué. Le nœud bascule en client.";
+      wifiStatus.textContent = data.message || "Wi-Fi applique. Le noeud bascule en client.";
     } catch (e) {
       wifiStatus.textContent = "Erreur: " + e.message;
     }
@@ -227,21 +298,7 @@
   };
   const saveTonLocal = () => {
     if (tonAddr) localStorage.setItem("fre_ton_addr", tonAddr.value.trim());
-    if (tonStatus) tonStatus.textContent = "Adresse TON enregistrée localement.";
-  };
-
-  // Modal token
-  const modal = document.getElementById("tokenModal");
-  const modalInput = document.getElementById("tokenModalInput");
-  const modalSave = document.getElementById("tokenModalSave");
-  const modalCancel = document.getElementById("tokenModalCancel");
-
-  const showModal = () => {
-    if (modal) modal.classList.remove("hidden");
-    if (modalInput) modalInput.value = loadToken();
-  };
-  const hideModal = () => {
-    if (modal) modal.classList.add("hidden");
+    if (tonStatus) tonStatus.textContent = "Adresse TON enregistree localement.";
   };
 
   // Bind handlers
@@ -252,27 +309,34 @@
       return;
     }
     saveToken(t);
-    if (actionStatus) actionStatus.textContent = "Token enregistré.";
+    if (actionStatus) actionStatus.textContent = "Token enregistre.";
     hideModal();
     refreshStatus();
+    loadProfile();
   };
+
   if (clearTokenBtn) clearTokenBtn.onclick = () => {
     saveToken("");
     if (tokenInput) tokenInput.value = "";
-    if (actionStatus) actionStatus.textContent = "Token effacé.";
+    if (actionStatus) actionStatus.textContent = "Token efface.";
   };
-  if (modalSave) modalSave.onclick = () => {
-    const t = modalInput?.value.trim() || "";
+
+  if (tokenModalSave) tokenModalSave.onclick = () => {
+    const t = tokenModalInput?.value.trim() || "";
     if (!t) {
-      if (actionStatus) actionStatus.textContent = "Token manquant.";
+      if (tokenModalStatus) tokenModalStatus.textContent = "Token manquant.";
       return;
     }
     saveToken(t);
     if (tokenInput) tokenInput.value = t;
+    if (tokenModalStatus) tokenModalStatus.textContent = "Token enregistre localement.";
     hideModal();
     refreshStatus();
+    loadProfile();
   };
-  if (modalCancel) modalCancel.onclick = hideModal;
+
+  if (tokenModalCancel) tokenModalCancel.onclick = hideModal;
+  if (generateTokenBtn) generateTokenBtn.onclick = generateAdminToken;
 
   if (refreshStatusBtn) refreshStatusBtn.onclick = refreshStatus;
   if (restartNodeBtn) restartNodeBtn.onclick = () => restartService("fre_node");
@@ -291,11 +355,6 @@
   // Init
   loadWifi();
   loadTon();
-
   if (tokenInput) tokenInput.value = loadToken();
-  if (!loadToken()) {
-    showModal();
-  } else {
-    refreshStatus();
-  }
+  ensureTokenFlow();
 })();
