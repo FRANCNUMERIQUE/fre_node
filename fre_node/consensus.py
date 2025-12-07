@@ -2,10 +2,11 @@ from datetime import datetime
 import json
 from .block import Block
 import os
-from .config import MAX_TX_PER_BLOCK, NODE_NAME, BLOCK_REWARD, VALIDATOR_PRIVKEY_ENV, ANCHOR_FREQUENCY_BLOCKS
+from .config import MAX_TX_PER_BLOCK, NODE_NAME, BLOCK_REWARD, VALIDATOR_PRIVKEY_ENV, ANCHOR_FREQUENCY_BLOCKS, SNAPSHOT_INTERVAL
 from .utils import load_signing_key, sign_message
 from .validator_set import load_validators, select_producer
 from .ton_anchor import anchor_client
+from .snapshot_manager import save_snapshot
 from .state import get_global_state
 
 class Consensus:
@@ -86,6 +87,19 @@ class Consensus:
         # Ancrage TON (tous les N blocs)
         if added and (new_block.index % ANCHOR_FREQUENCY_BLOCKS == 0):
             anchor_client.anchor_block(new_block.to_dict())
+
+        # Snapshot périodique
+        if added and (new_block.index % SNAPSHOT_INTERVAL == 0):
+            save_snapshot(
+                {
+                    "balances": self.state.balances,
+                    "nonces": self.state.nonces,
+                    "state_root": state_root,
+                },
+                new_block.index,
+                producer_pub=self.signing_key.verify_key.encode().hex() if self.signing_key else "",
+                privkey_b64=VALIDATOR_PRIVKEY_ENV,
+            )
 
         return new_block.to_dict()
 

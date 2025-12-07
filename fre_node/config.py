@@ -75,3 +75,18 @@ TON_API_KEY = os.getenv("FRE_TON_API_KEY", "")
 ANCHOR_CONTRACT = os.getenv("FRE_ANCHOR_CONTRACT", "")
 VALIDATOR_TON_WALLET = os.getenv("FRE_TON_WALLET", "")
 VALIDATOR_TON_PRIVATE_KEY = os.getenv("FRE_TON_PRIVKEY", "")
+
+
+# ===========================
+# SNAPSHOTS
+# ===========================
+SNAPSHOT_INTERVAL = int(os.getenv("FRE_SNAPSHOT_INTERVAL", "50"))
+MAX_ROLLBACK = int(os.getenv("FRE_MAX_ROLLBACK", "200"))
+SNAPSHOT_DIR = os.path.join(DATA_DIR, "snapshots")
+
+# ===========================
+# P2P (WS)
+# ===========================
+PEERS_FILE = os.path.join(DATA_DIR, "peers.json")
+P2P_PRIVKEY_ENV = os.getenv("FRE_P2P_PRIVKEY", os.getenv("FRE_VALIDATOR_PRIVKEY", ""))
+P2P_BAN_THRESHOLD = 5
