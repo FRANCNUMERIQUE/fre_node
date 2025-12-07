@@ -49,6 +49,7 @@
             <label>Stake</label>
             <input id="valStake" type="number" value="1" min="1">
             <button id="saveValidator">Enregistrer</button>
+            <button class="secondary" id="generateKeys">Générer des clés</button>
             <div class="status" id="valStatus"></div>
         </div>
 
@@ -59,12 +60,38 @@
         </div>
     </div>
 
+    <div class="grid">
+        <div class="card">
+            <h3>Wi‑Fi domestique</h3>
+            <label>SSID</label>
+            <input id="wifiSsid" type="text" placeholder="MaBox">
+            <label>Mot de passe</label>
+            <input id="wifiPass" type="password" placeholder="********">
+            <button class="secondary" id="saveWifi">Enregistrer (local)</button>
+            <div class="status" id="wifiStatus"></div>
+            <p style="color:#8b949e; font-size:13px; margin-top:8px;">Conserve ces infos côté navigateur pour les utiliser plus tard (configuration manuelle ou future API).</p>
+        </div>
+        <div class="card">
+            <h3>Wallet TON</h3>
+            <label>Adresse TON</label>
+            <input id="tonAddr" type="text" placeholder="EQ...">
+            <button class="secondary" id="saveTon">Lier (local)</button>
+            <div class="status" id="tonStatus"></div>
+            <p style="color:#8b949e; font-size:13px; margin-top:8px;">Stocké localement pour les futures actions (ancrage, récompenses).</p>
+        </div>
+    </div>
+
     <div class="card">
         <h3>Actions rapides</h3>
         <button class="secondary" id="restartNode">Redémarrer fre_node</button>
         <button class="secondary" id="restartDash">Redémarrer fre_dashboard</button>
         <button class="secondary" id="runUpdate">Forcer update</button>
         <div class="status" id="actionStatus"></div>
+    </div>
+
+    <div class="card">
+        <h3>Récompenses / Infos</h3>
+        <pre id="rewardsBox">À venir : affichage des rewards et fees collectées.</pre>
     </div>
 
     <div class="card">

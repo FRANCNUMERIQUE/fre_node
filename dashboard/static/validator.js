@@ -7,6 +7,7 @@
   const valPriv = document.getElementById("valPriv");
   const valStake = document.getElementById("valStake");
   const valStatus = document.getElementById("valStatus");
+  const generateKeysBtn = document.getElementById("generateKeys");
   const refreshStatusBtn = document.getElementById("refreshStatus");
   const quickStatus = document.getElementById("quickStatus");
   const restartNodeBtn = document.getElementById("restartNode");
@@ -14,6 +15,13 @@
   const runUpdateBtn = document.getElementById("runUpdate");
   const actionStatus = document.getElementById("actionStatus");
   const logOutput = document.getElementById("logOutput");
+  const wifiSsid = document.getElementById("wifiSsid");
+  const wifiPass = document.getElementById("wifiPass");
+  const wifiStatus = document.getElementById("wifiStatus");
+  const saveWifiBtn = document.getElementById("saveWifi");
+  const tonAddr = document.getElementById("tonAddr");
+  const tonStatus = document.getElementById("tonStatus");
+  const saveTonBtn = document.getElementById("saveTon");
 
   const loadToken = () => localStorage.getItem("fre_admin_token") || "";
   const saveToken = (t) => localStorage.setItem("fre_admin_token", t || "");
@@ -108,6 +116,45 @@
   runUpdateBtn.onclick = runUpdate;
   refreshStatusBtn.onclick = refreshStatus;
   document.getElementById("saveValidator").onclick = saveValidator;
+  generateKeysBtn.onclick = async () => {
+    valStatus.textContent = "Génération en cours...";
+    try {
+      if (!window.crypto || !window.crypto.subtle) throw new Error("WebCrypto indisponible");
+      const keyPair = await window.crypto.subtle.generateKey(
+        { name: "Ed25519" },
+        true,
+        ["sign", "verify"]
+      );
+      const pub = await window.crypto.subtle.exportKey("raw", keyPair.publicKey);
+      const priv = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+      const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      valPub.value = b64url(pub);
+      valPriv.value = b64url(priv);
+      valStatus.textContent = "Clés générées (local, non envoyées).";
+    } catch (e) {
+      valStatus.textContent = "Erreur génération: " + e.message;
+    }
+  };
+
+  // Wi-Fi domestique (stockage local)
+  const loadWifi = () => {
+    wifiSsid.value = localStorage.getItem("fre_wifi_ssid") || "";
+    wifiPass.value = localStorage.getItem("fre_wifi_pass") || "";
+  };
+  saveWifiBtn.onclick = () => {
+    localStorage.setItem("fre_wifi_ssid", wifiSsid.value.trim());
+    localStorage.setItem("fre_wifi_pass", wifiPass.value);
+    wifiStatus.textContent = "Wi‑Fi enregistré localement.";
+  };
+
+  // Wallet TON (stockage local)
+  const loadTon = () => {
+    tonAddr.value = localStorage.getItem("fre_ton_addr") || "";
+  };
+  saveTonBtn.onclick = () => {
+    localStorage.setItem("fre_ton_addr", tonAddr.value.trim());
+    tonStatus.textContent = "Adresse TON enregistrée localement.";
+  };
 
   // Modal token
   const modal = document.getElementById("tokenModal");
@@ -131,6 +178,10 @@
     refreshStatus();
   };
   modalCancel.onclick = () => hideModal();
+
+  // Chargement des données locales
+  loadWifi();
+  loadTon();
 
   if (!loadToken()) {
     showModal();
