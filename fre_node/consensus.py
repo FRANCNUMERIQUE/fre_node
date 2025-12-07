@@ -67,10 +67,10 @@ class Consensus:
     @staticmethod
     def validate_block(block: dict, prev_block: dict) -> bool:
         """
-        Vérifie :
+        V?rifie :
         - index correct
         - prev_hash correct
-        - hash correct
+        - hash correct (inclut merkle_root)
         """
         if prev_block and block["prev_hash"] != prev_block["hash"]:
             return False
@@ -81,7 +81,8 @@ class Consensus:
             txs=block["txs"],
             prev_hash=block["prev_hash"],
             validator=block["validator"],
-            state_root=block["state_root"]
+            state_root=block["state_root"],
+            merkle_root=block.get("merkle_root")
         )
 
         if block_obj.hash != block["hash"]:

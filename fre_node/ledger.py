@@ -6,7 +6,7 @@ from .block import Block
 
 class Ledger:
     """
-    Simple JSON ledger (full chain persisted). Includes basic validation and atomic writes.
+    JSON ledger with basic validation and atomic writes.
     """
 
     def __init__(self):
@@ -47,6 +47,7 @@ class Ledger:
         prev_hash = blk.get("prev_hash", blk.get("previous_hash", "0" * 64))
         validator = blk.get("validator", blk.get("node", "genesis"))
         state_root = blk.get("state_root", blk.get("stateRoot", ""))
+        merkle_root = blk.get("merkle_root")
 
         normalized = {
             "index": blk.get("index", 0),
@@ -55,10 +56,12 @@ class Ledger:
             "prev_hash": prev_hash,
             "validator": validator,
             "state_root": state_root,
+            "merkle_root": merkle_root,
         }
 
         try:
             block_obj = Block(**normalized)
+            normalized["merkle_root"] = block_obj.merkle_root
             normalized["hash"] = blk.get("hash", block_obj.hash)
         except Exception:
             normalized["hash"] = blk.get("hash", "0" * 64)
@@ -121,19 +124,24 @@ class Ledger:
                 return False
 
         try:
-            computed = Block(
+            block_obj = Block(
                 index=blk["index"],
                 timestamp=blk["timestamp"],
                 txs=blk["txs"],
                 prev_hash=blk["prev_hash"],
                 validator=blk["validator"],
                 state_root=blk.get("state_root", ""),
-            ).hash
+                merkle_root=blk.get("merkle_root"),
+            )
         except Exception:
             print("[LEDGER] Malformed block")
             return False
 
-        if blk.get("hash") != computed:
+        if blk.get("merkle_root") and blk.get("merkle_root") != block_obj.merkle_root:
+            print("[LEDGER] Invalid merkle_root")
+            return False
+
+        if blk.get("hash") != block_obj.hash:
             print("[LEDGER] Invalid hash")
             return False
 
@@ -141,21 +149,21 @@ class Ledger:
 
     def _validate_chain_on_load(self):
         for i, blk in enumerate(self.chain):
-            try:
-                computed = Block(
-                    index=blk["index"],
-                    timestamp=blk["timestamp"],
-                    txs=blk["txs"],
-                    prev_hash=blk["prev_hash"],
-                    validator=blk["validator"],
-                    state_root=blk.get("state_root", ""),
-                ).hash
-            except Exception:
-                raise ValueError(f"Block #{i} malformed")
+            block_obj = Block(
+                index=blk["index"],
+                timestamp=blk["timestamp"],
+                txs=blk["txs"],
+                prev_hash=blk["prev_hash"],
+                validator=blk["validator"],
+                state_root=blk.get("state_root", ""),
+                merkle_root=blk.get("merkle_root"),
+            )
 
-            if blk.get("hash") != computed:
+            if blk.get("merkle_root") and blk.get("merkle_root") != block_obj.merkle_root:
+                raise ValueError(f"Block #{i} invalid merkle_root")
+
+            if blk.get("hash") != block_obj.hash:
                 raise ValueError(f"Block #{i} invalid hash")
 
             if i > 0 and blk.get("prev_hash") != self.chain[i - 1]["hash"]:
                 raise ValueError(f"Block #{i} invalid chain link")
-
