@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>FRE Node — Profil Validateur</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { background:#0d1117; color:#e6edf3; font-family:"Segoe UI", Roboto, sans-serif; margin:0; padding:0;}
+        .container { max-width:1100px; margin:20px auto; padding:0 16px; }
+        h1 { color:#58a6ff; text-align:center; margin-bottom:8px; }
+        .subtitle { text-align:center; color:#8b949e; margin-bottom:20px; }
+        .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); }
+        .card { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:14px; }
+        label { display:block; margin:8px 0 4px; color:#8b949e; }
+        input, textarea { width:100%; padding:8px; border-radius:6px; border:1px solid #30363d; background:#0d1117; color:#e6edf3; }
+        button { background:#238636; border:none; color:white; padding:10px 14px; border-radius:8px; cursor:pointer; margin-right:8px; margin-top:8px;}
+        button.secondary { background:#30363d; }
+        pre { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px; min-height:120px; overflow:auto; }
+        .status { font-size:14px; color:#8b949e; margin-top:6px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Profil Validateur</h1>
+    <div class="subtitle">Configurer l’identité, les clés et actions du node</div>
+
+    <div class="card">
+        <label>Token admin (X-Admin-Token)</label>
+        <input id="token" type="text" placeholder="Coller votre token">
+        <div style="margin-top:8px;">
+            <button id="saveToken">Enregistrer le token</button>
+            <button class="secondary" id="clearToken">Effacer</button>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Identité / Clés</h3>
+            <label>Nom du validateur</label>
+            <input id="valName" type="text" placeholder="fre-node-01">
+            <label>Clé publique (base64url)</label>
+            <textarea id="valPub" rows="2" placeholder="clé publique"></textarea>
+            <label>Clé privée (base64url)</label>
+            <textarea id="valPriv" rows="2" placeholder="clé privée"></textarea>
+            <label>Stake</label>
+            <input id="valStake" type="number" value="1" min="1">
+            <button id="saveValidator">Enregistrer</button>
+            <div class="status" id="valStatus"></div>
+        </div>
+
+        <div class="card">
+            <h3>Statut Node / Services</h3>
+            <button class="secondary" id="refreshStatus">Rafraîchir</button>
+            <pre id="quickStatus">...</pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Actions rapides</h3>
+        <button class="secondary" id="restartNode">Redémarrer fre_node</button>
+        <button class="secondary" id="restartDash">Redémarrer fre_dashboard</button>
+        <button class="secondary" id="runUpdate">Forcer update</button>
+        <div class="status" id="actionStatus"></div>
+    </div>
+
+    <div class="card">
+        <h3>Journal des opérations</h3>
+        <pre id="logOutput">Prêt.</pre>
+    </div>
+</div>
+
+<script>
+  const apiBase = "{{ api_base }}";
+</script>
+<script src="/static/validator.js"></script>
+</body>
+</html>
