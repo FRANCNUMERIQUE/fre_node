@@ -41,11 +41,29 @@ MEMPOOL_MAX_SIZE = 10000
 # ===========================
 # Configure via env pour éviter de commit une clé privée.
 
+VALIDATOR_SECRET_FILE = os.path.join(DATA_DIR, "validator_secret.json")
+
 VALIDATOR = {
     "name": os.getenv("FRE_VALIDATOR_NAME", NODE_NAME),
     "public_key": os.getenv("FRE_VALIDATOR_PUBKEY", ""),  # base64url
 }
 VALIDATOR_PRIVATE_KEY = os.getenv("FRE_VALIDATOR_PRIVKEY", "")  # base64url ed25519
+
+# Charger une config locale facultative si les variables d'environnement ne sont pas définies
+if os.path.exists(VALIDATOR_SECRET_FILE):
+    try:
+        import json
+
+        with open(VALIDATOR_SECRET_FILE, "r") as f:
+            secret = json.load(f)
+        if not VALIDATOR.get("name") and secret.get("name"):
+            VALIDATOR["name"] = secret.get("name")
+        if not VALIDATOR.get("public_key") and secret.get("public_key"):
+            VALIDATOR["public_key"] = secret.get("public_key")
+        if not VALIDATOR_PRIVATE_KEY and secret.get("private_key"):
+            VALIDATOR_PRIVATE_KEY = secret.get("private_key")
+    except Exception:
+        pass
 
 # ===========================
 # VALIDATEURS (mPoS light)
@@ -54,8 +72,8 @@ VALIDATORS_FILE = os.path.join(DATA_DIR, "validators.json")
 # Liste statique par défaut (un seul validateur). Sera écrasée par validators.json si présent.
 VALIDATORS_DEFAULT = [
     {
-        "name": os.getenv("FRE_VALIDATOR_NAME", "fre-node-01"),
-        "public_key": os.getenv("FRE_VALIDATOR_PUBKEY", ""),
+        "name": VALIDATOR.get("name") or os.getenv("FRE_VALIDATOR_NAME", "fre-node-01"),
+        "public_key": VALIDATOR.get("public_key") or os.getenv("FRE_VALIDATOR_PUBKEY", ""),
         "stake": 1
     }
 ]

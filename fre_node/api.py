@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Header
+from fastapi import FastAPI, Header, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fre_node.config import API_PORT
@@ -6,11 +6,13 @@ from .validator import Validator
 from .mempool import Mempool
 from .ledger import Ledger
 from .state import State
-from .config import NODE_NAME, ADMIN_TOKEN
+from .config import NODE_NAME, ADMIN_TOKEN, VALIDATORS_FILE, VALIDATOR_SECRET_FILE
 from .validator_set import load_validators
 from .ton_anchor import anchor_client
 import subprocess
 from pathlib import Path
+import json
+import os
 
 import psutil
 import platform
@@ -148,6 +150,88 @@ def admin_update(x_admin_token: str = Header(default="")):
         }
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+def _systemctl(cmd: list):
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        return res.returncode, res.stdout.strip(), res.stderr.strip()
+    except Exception as e:
+        return 1, "", str(e)
+
+
+@app.get("/admin/status")
+def admin_status(x_admin_token: str = Header(default="")):
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    services = {}
+    for svc in ["fre_node", "fre_dashboard"]:
+        code, out, err = _systemctl(["systemctl", "is-active", f"{svc}.service"])
+        services[svc] = {"status": out or "unknown", "error": err}
+
+    return {
+        "services": services,
+        "node": {
+            "height": ledger.count_blocks(),
+            "mempool": mempool.count(),
+            "latest": ledger.get_latest_block(),
+        },
+        "mempool": mempool.count(),
+        "validators": validators_list,
+    }
+
+
+@app.post("/admin/service/restart")
+def admin_service_restart(
+    payload: dict = Body(...),
+    x_admin_token: str = Header(default="")
+):
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    service = payload.get("service")
+    if service not in ("fre_node", "fre_dashboard"):
+        return JSONResponse({"error": "invalid service"}, status_code=400)
+    code, out, err = _systemctl(["systemctl", "restart", f"{service}.service"])
+    return {"status": "ok" if code == 0 else "failed", "stdout": out, "stderr": err, "returncode": code}
+
+
+@app.post("/admin/validator")
+def admin_set_validator(
+    payload: dict = Body(...),
+    x_admin_token: str = Header(default="")
+):
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    name = payload.get("name")
+    public_key = payload.get("public_key")
+    private_key = payload.get("private_key", "")
+    stake = payload.get("stake", 1)
+    if not name or not public_key:
+        return JSONResponse({"error": "name and public_key required"}, status_code=400)
+    try:
+        stake_int = int(stake)
+    except Exception:
+        stake_int = 1
+
+    # Sauvegarde validators.json
+    validators_data = [{"name": name, "pubkey": public_key, "stake": stake_int}]
+    Path(VALIDATORS_FILE).parent.mkdir(parents=True, exist_ok=True)
+    Path(VALIDATORS_FILE).write_text(json.dumps(validators_data, indent=2))
+    global validators_list
+    validators_list = validators_data
+
+    # Sauvegarde facultative de la clé privée (utilisée si env absent)
+    secret = {
+        "name": name,
+        "public_key": public_key,
+        "private_key": private_key or "",
+    }
+    Path(VALIDATOR_SECRET_FILE).parent.mkdir(parents=True, exist_ok=True)
+    Path(VALIDATOR_SECRET_FILE).write_text(json.dumps(secret, indent=2))
+
+    return {"status": "ok", "validators": validators_data}
 
 # ===============================
 #          LEGACY ROUTES
