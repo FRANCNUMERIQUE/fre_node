@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 import uvicorn
 import requests
 import socket
+from pathlib import Path
 
 
 app = FastAPI(title="FRE Dashboard")
@@ -30,8 +31,9 @@ print("Node API URL ->", node_api_url)
 # ------------------------------
 # HTML + STATIC
 # ------------------------------
-templates = Jinja2Templates(directory="dashboard/templates")
-app.mount("/static", StaticFiles(directory="dashboard/static"), name="static")
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
