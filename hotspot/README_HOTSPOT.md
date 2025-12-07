@@ -51,6 +51,10 @@ sudo ip addr add 192.168.50.1/24 dev wlan0
 sudo ip link set wlan0 up
 ```
 
+## 3) Vérification DHCP
+- Fichier de baux : `/var/lib/misc/dnsmasq.leases`
+- Logs DHCP : `journalctl -u dnsmasq -f` (grâce à `log-dhcp` dans la conf)
+
 ## 3) hostapd (point d’accès)
 Copier et adapter `hotspot/hostapd.conf.example` vers `/etc/hostapd/hostapd.conf`, puis définir dans `/etc/default/hostapd` :
 ```
