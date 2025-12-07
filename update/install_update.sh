@@ -4,15 +4,14 @@ echo "[UPDATE] Installation du gestionnaire de mises à jour..."
 
 SCRIPT_DIR="$(dirname $(realpath $0))"
 
-crontab -l > mycron 2>/dev/null
-
-# toutes les 10 minutes : mise à jour automatique
-echo "*/10 * * * * bash $SCRIPT_DIR/update_node.sh >> $SCRIPT_DIR/update.log 2>&1" >> mycron
-
+# Nettoie les entrées existantes pour update_node.sh puis ajoute le cron quotidien à 02:00 UTC
+crontab -l 2>/dev/null | grep -v "update_node.sh" > mycron
+echo "CRON_TZ=UTC" >> mycron
+echo "0 2 * * * bash $SCRIPT_DIR/update_node.sh >> $SCRIPT_DIR/update.log 2>&1" >> mycron
 crontab mycron
 rm mycron
 
-echo "[UPDATE] Mise à jour automatique activée."
+echo "[UPDATE] Mise à jour automatique activée (02:00 UTC)."
 
 echo "[INSTALL] Installation / Mise à jour des services FRE..."
 
