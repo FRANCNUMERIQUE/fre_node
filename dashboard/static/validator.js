@@ -1,7 +1,4 @@
 (() => {
-  const tokenInput = document.getElementById("token");
-  const saveTokenBtn = document.getElementById("saveToken");
-  const clearTokenBtn = document.getElementById("clearToken");
   const valName = document.getElementById("valName");
   const valPub = document.getElementById("valPub");
   const valPriv = document.getElementById("valPriv");
@@ -35,24 +32,6 @@
     return h;
   };
 
-  tokenInput.value = loadToken();
-
-  saveTokenBtn.onclick = () => {
-    const t = tokenInput.value.trim();
-    if (!t) {
-      actionStatus.textContent = "Token manquant.";
-      return;
-    }
-    saveToken(t);
-    actionStatus.textContent = "Token enregistré.";
-    maybeHideModal();
-    refreshStatus();
-  };
-  clearTokenBtn.onclick = () => {
-    saveToken("");
-    tokenInput.value = "";
-    actionStatus.textContent = "Token effacé.";
-  };
 
   const handleResponse = async (res) => {
     if (!res.ok) {
@@ -226,40 +205,11 @@
   };
 
   // Modal token
-  const modal = document.getElementById("tokenModal");
-  const modalInput = document.getElementById("tokenModalInput");
-  const modalSave = document.getElementById("tokenModalSave");
-  const modalCancel = document.getElementById("tokenModalCancel");
-
-  const showModal = () => {
-    modal.classList.remove("hidden");
-    modalInput.value = loadToken();
-  };
-  const hideModal = () => modal.classList.add("hidden");
-  const maybeHideModal = () => {
-    if (loadToken()) hideModal();
-  };
-
-  modalSave.onclick = () => {
-    const t = modalInput.value.trim();
-    if (!t) {
-      actionStatus.textContent = "Token manquant.";
-      return;
-    }
-    saveToken(t);
-    tokenInput.value = loadToken();
-    hideModal();
-    refreshStatus();
-  };
-  modalCancel.onclick = () => hideModal();
+  // Pas de champ token à l'écran pour le moment : utilise le stockage existant (si déjà enregistré dans le navigateur)
 
   // Chargement des données locales
   loadWifi();
   loadTon();
 
-  if (!loadToken()) {
-    showModal();
-  } else {
-    refreshStatus();
-  }
+  refreshStatus();
 })();
