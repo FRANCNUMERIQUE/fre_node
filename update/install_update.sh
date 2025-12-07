@@ -21,9 +21,9 @@ sudo cp "$SCRIPT_DIR/../system/fre_dashboard.service" /etc/systemd/system/fre_da
 [ -f "$SCRIPT_DIR/../system/fre_portal.service" ] && sudo cp "$SCRIPT_DIR/../system/fre_portal.service" /etc/systemd/system/fre_portal.service
 
 # Hotspot dependencies
-echo "[INSTALL] Installing hostapd/dnsmasq/avahi..."
+echo "[INSTALL] Installing hostapd/dnsmasq/avahi/tcpdump..."
 sudo apt-get update -y
-sudo apt-get install -y hostapd dnsmasq avahi-daemon
+sudo apt-get install -y hostapd dnsmasq avahi-daemon tcpdump
 
 # Unmask services
 sudo systemctl unmask hostapd 2>/dev/null || true
