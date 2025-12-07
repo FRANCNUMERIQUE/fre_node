@@ -25,10 +25,12 @@ jobs:
           echo "nodes=$NODES" >> $GITHUB_OUTPUT
 
       - name: Trigger update on each node
+        env:
+          ADMIN_TOKEN: ${{ secrets.FRE_UPDATE_KEY }}
         run: |
           for n in ${{ steps.nodes.outputs.nodes }}; do
             echo "Triggering update on $n"
             curl -X POST "$n/admin/update" \
-              -H "X-Admin-Token: ${{ secrets.FRE_UPDATE_KEY }}" \
+              -H "X-Admin-Token: ${ADMIN_TOKEN}" \
               -H "Content-Type: application/json" || echo "Failed on $n"
           done
