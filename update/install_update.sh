@@ -24,9 +24,9 @@ sudo cp "$SCRIPT_DIR/../system/fre_dashboard.service" /etc/systemd/system/fre_da
 [ -f "$SCRIPT_DIR/../system/dhclient-wlan0_sta.service" ] && sudo cp "$SCRIPT_DIR/../system/dhclient-wlan0_sta.service" /etc/systemd/system/dhclient-wlan0_sta.service
 
 # Hotspot dependencies
-echo "[INSTALL] Installing hostapd/dnsmasq/avahi/tcpdump..."
+echo "[INSTALL] Installing hostapd/dnsmasq/avahi/tcpdump/isc-dhcp-client..."
 sudo apt-get update -y
-sudo apt-get install -y hostapd dnsmasq avahi-daemon tcpdump
+sudo apt-get install -y hostapd dnsmasq avahi-daemon tcpdump isc-dhcp-client
 
 # Unmask services
 sudo systemctl unmask hostapd 2>/dev/null || true

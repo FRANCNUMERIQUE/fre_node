@@ -5,7 +5,7 @@ Requires=wpa_supplicant@wlan0_sta.service
 
 [Service]
 Type=oneshot
-ExecStart=/sbin/dhclient -v -nw wlan0_sta
+ExecStart=/usr/sbin/dhclient -v -nw wlan0_sta
 RemainAfterExit=yes
 
 [Install]
