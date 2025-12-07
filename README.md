@@ -1,58 +1,58 @@
 FRE Node
 ========
 
-Ce dépôt contient un nœud FRE minimal (API FastAPI + boucle consensus PoA simplifiée) et un dashboard FastAPI/Jinja2.
+Minimal FRE node: FastAPI API + simple PoA loop + FastAPI/Jinja2 dashboard.
 
-Pré-requis
-----------
-- Python 3.10+ (recommandé)
-- systemd (pour les services fre_node.service et fre_dashboard.service)
+Prerequisites
+-------------
+- Python 3.10+
+- systemd (for fre_node.service and fre_dashboard.service)
 - git
 
-Installation rapide (Linux)
----------------------------
+Quick install (Linux)
+---------------------
 ```bash
 git clone https://github.com/FRANCNUMERIQUE/fre_node.git
 cd fre_node
 bash install.sh
 ```
-`install.sh` crée un venv, installe les dépendances, génère/installe les unités systemd, active et démarre les services `fre_node.service` et `fre_dashboard.service`.
+`install.sh` creates a venv, installs deps, writes systemd units, enables and starts `fre_node.service` and `fre_dashboard.service`.
 
-Variables utiles (env) avant `bash install.sh` :
-- `NODE_DIR` : chemin du dépôt (défaut = dossier courant)
-- `PYTHON_BIN` : binaire python à utiliser (défaut = python3)
-- `VENV_DIR` : chemin du venv (défaut = $NODE_DIR/venv)
-- `SERVICE_USER` : utilisateur systemd (défaut = utilisateur courant ou sudo)
+Environment vars (before `bash install.sh`):
+- `NODE_DIR`    : repo path (default = current dir)
+- `PYTHON_BIN`  : python binary (default = python3)
+- `VENV_DIR`    : venv path (default = $NODE_DIR/venv)
+- `SERVICE_USER`: systemd user (default = current/sudo user)
 
-Services systemd
+Systemd services
 ----------------
-```
+```bash
 sudo systemctl status fre_node.service
 sudo systemctl status fre_dashboard.service
 ```
-API : http://<ip>:8500
-Dashboard : http://<ip>:8080
+API: http://<ip>:8500  
+Dashboard: http://<ip>:8080
 
 Diagnostic
 ----------
-```
+```bash
 bash diagnose.sh
 ```
-Vérifie services, API, blockchain, ledger, mempool, port et dashboard (codes HTTP).
+Checks services, API, blockchain, ledger, mempool, port, dashboard (HTTP codes).
 
-Transactions de test (mode dev)
--------------------------------
-Le validator accepte des TX de test en mode dev (par défaut `FRE_DEV_MODE=true`). Nonce initial = 0. Exemple :
+Test transactions (dev mode)
+----------------------------
+Validator accepts test TX when `FRE_DEV_MODE=true` (default). Initial nonce = 0.
 ```bash
 curl -X POST http://127.0.0.1:8500/tx \
   -H "Content-Type: application/json" \
   -d '{"from":"alice","to":"bob","amount":10,"nonce":0,"signature":"test"}'
 ```
-Après minage (boucle toutes les 5s si mempool non vide), le nonce de l’émetteur passe à 1.
+After a block is mined (every 5s if mempool not empty), sender nonce moves to 1.
 
 Wallet helper
 -------------
-`fre_node/wallet.py` permet de générer un wallet et signer une transaction :
+`fre_node/wallet.py` to generate a wallet and sign a transaction:
 ```python
 from fre_node.wallet import Wallet
 w = Wallet.create()
@@ -61,6 +61,6 @@ tx = w.create_tx(to="dest_address", amount=10, nonce=0)
 print(tx)
 ```
 
-Mises à jour automatiques (cron)
---------------------------------
-`update/install_update.sh` installe un cron (toutes les 10 minutes) qui appelle `update/update_node.sh` pour pull/pip install/restart avec sauvegarde.
+Automatic updates (cron)
+------------------------
+`update/install_update.sh` installs a cron (every 10 minutes) calling `update/update_node.sh` to fetch/pip install/restart with backup.
