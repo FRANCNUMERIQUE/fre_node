@@ -1,4 +1,6 @@
 import os
+import json
+import secrets
 
 # ===========================
 # CONFIGURATION PRINCIPALE
@@ -11,6 +13,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "db")
 CHAIN_FILE = os.path.join(DATA_DIR, "chain.json")
 STATE_FILE = os.path.join(DATA_DIR, "state.json")
 CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
+ADMIN_TOKEN_FILE = os.path.join(DATA_DIR, "admin_token.json")
 
 # ===========================
 # RÉSEAU
@@ -124,4 +127,37 @@ P2P_BAN_THRESHOLD = 5
 # ===========================
 # ADMIN API (broadcast update)
 # ===========================
-ADMIN_TOKEN = os.getenv("FRE_ADMIN_TOKEN", "")
+def load_admin_token():
+    """
+    Charge le token admin à partir de l'env ou d'un fichier local.
+    Génère un token si absent (premier démarrage) et l'écrit dans admin_token.json.
+    Le token n'est pas exposé via HTTP, seulement dans les logs/console locale.
+    """
+    env_tok = os.getenv("FRE_ADMIN_TOKEN", "").strip()
+    if env_tok:
+        return env_tok
+    # fichier
+    if os.path.exists(ADMIN_TOKEN_FILE):
+        try:
+            data = json.loads(open(ADMIN_TOKEN_FILE, "r").read())
+            tok = data.get("token", "").strip()
+            if tok:
+                return tok
+        except Exception:
+            pass
+    # génération
+    tok = secrets.token_hex(32)
+    try:
+        os.makedirs(os.path.dirname(ADMIN_TOKEN_FILE), exist_ok=True)
+        with open(ADMIN_TOKEN_FILE, "w") as f:
+            f.write(json.dumps({"token": tok}, indent=2))
+    except Exception:
+        pass
+    print("\n=== FRE NODE ADMIN TOKEN (confidentiel) ===")
+    print(tok)
+    print("Stocké localement dans", ADMIN_TOKEN_FILE)
+    print("Affichez ce token sur l'écran local ou en QR; ne le publiez pas sur le réseau.")
+    print("==========================================\n")
+    return tok
+
+ADMIN_TOKEN = load_admin_token()

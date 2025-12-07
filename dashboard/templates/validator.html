@@ -17,7 +17,6 @@
         button.secondary { background:#30363d; }
         pre { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px; min-height:120px; overflow:auto; }
         .status { font-size:14px; color:#8b949e; margin-top:6px; }
-        /* Modal login */
         .modal-backdrop { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; }
         .modal { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:20px; max-width:360px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
         .hidden { display:none; }
@@ -28,6 +27,19 @@
     <h1>Profil Validateur</h1>
     <div class="subtitle">Configurer l’identité, les clés et actions du node</div>
 
+    <!-- Token admin -->
+    <div class="card">
+        <label>Token Administrateur</label>
+        <input id="token" type="text" placeholder="Coller le token affiché localement (console/écran)">
+        <div style="color:#8b949e; font-size:13px; margin-top:6px;">
+            - Token généré au premier démarrage, visible uniquement sur la console/écran local (ou QR).<br>
+            - Ne pas le partager ; il déverrouille les actions sensibles (sauvegarde, redémarrage, update).
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="saveToken">Enregistrer</button>
+            <button class="secondary" id="clearToken">Effacer</button>
+        </div>
+    </div>
 
     <div class="grid">
         <div class="card">
@@ -40,11 +52,13 @@
             <textarea id="valPriv" rows="2" placeholder="clé privée"></textarea>
             <label>Stake</label>
             <input id="valStake" type="number" value="1" min="1">
-            <button id="saveValidator">Enregistrer</button>
-            <button class="secondary" id="generateKeys">Générer des clés</button>
-        <div class="status" id="valStatus"></div>
-        <!-- Boutons masqués pour l'instant -->
-    </div>
+            <div class="status" id="valStatus"></div>
+            <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="secondary" id="generateKeys">Générer</button>
+                <button id="saveValidator">Enregistrer</button>
+                <button class="secondary" id="regenerateKeys">Re-générer</button>
+            </div>
+        </div>
 
         <div class="card">
             <h3>Statut Node / Services</h3>
@@ -103,7 +117,7 @@
 <div class="modal-backdrop hidden" id="tokenModal">
   <div class="modal">
     <h3>Connexion validateur</h3>
-    <p style="color:#8b949e; font-size:14px;">Saisissez votre token (X-Access-Token) pour accéder aux actions.</p>
+    <p style="color:#8b949e; font-size:14px;">Saisissez votre token administrateur pour accéder aux actions.</p>
     <input id="tokenModalInput" type="text" placeholder="Token admin">
     <div style="margin-top:10px;">
       <button id="tokenModalSave">Valider</button>

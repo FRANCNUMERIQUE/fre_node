@@ -1,12 +1,19 @@
 (() => {
+  // DOM references
+  const tokenInput = document.getElementById("token");
+  const saveTokenBtn = document.getElementById("saveToken");
+  const clearTokenBtn = document.getElementById("clearToken");
+
   const valName = document.getElementById("valName");
   const valPub = document.getElementById("valPub");
   const valPriv = document.getElementById("valPriv");
   const valStake = document.getElementById("valStake");
   const valStatus = document.getElementById("valStatus");
+
   const generateKeysBtn = document.getElementById("generateKeys");
   const regenerateKeysBtn = document.getElementById("regenerateKeys");
-  const loadProfileBtn = document.getElementById("loadProfile");
+  const saveValidatorBtn = document.getElementById("saveValidator");
+
   const refreshStatusBtn = document.getElementById("refreshStatus");
   const quickStatus = document.getElementById("quickStatus");
   const restartNodeBtn = document.getElementById("restartNode");
@@ -14,16 +21,20 @@
   const runUpdateBtn = document.getElementById("runUpdate");
   const actionStatus = document.getElementById("actionStatus");
   const logOutput = document.getElementById("logOutput");
+
   const wifiSsid = document.getElementById("wifiSsid");
   const wifiPass = document.getElementById("wifiPass");
   const wifiStatus = document.getElementById("wifiStatus");
   const saveWifiBtn = document.getElementById("saveWifi");
   const applyWifiBtn = document.getElementById("applyWifi");
+
   const tonAddr = document.getElementById("tonAddr");
   const tonStatus = document.getElementById("tonStatus");
   const saveTonBtn = document.getElementById("saveTon");
+
   const rewardsBox = document.getElementById("rewardsBox");
 
+  // Token storage
   const loadToken = () => localStorage.getItem("fre_validator_token") || "";
   const saveToken = (t) => localStorage.setItem("fre_validator_token", t || "");
   const headers = () => {
@@ -33,7 +44,7 @@
     return h;
   };
 
-
+  // Helpers
   const handleResponse = async (res) => {
     if (!res.ok) {
       const text = await res.text();
@@ -42,7 +53,9 @@
     return res.json();
   };
 
+  // Status/services
   const refreshStatus = async () => {
+    if (!quickStatus) return;
     quickStatus.textContent = "Chargement...";
     try {
       const res = await fetch(`${apiBase}/admin/status`, { headers: headers() });
@@ -53,7 +66,9 @@
     }
   };
 
+  // Restart services / update
   const restartService = async (service) => {
+    if (!actionStatus) return;
     actionStatus.textContent = `Redémarrage ${service}...`;
     try {
       const res = await fetch(`${apiBase}/admin/service/restart`, {
@@ -69,6 +84,7 @@
   };
 
   const runUpdate = async () => {
+    if (!logOutput) return;
     logOutput.textContent = "Mise à jour en cours...";
     try {
       const res = await fetch(`${apiBase}/admin/update`, { method: "POST", headers: headers() });
@@ -79,56 +95,55 @@
     }
   };
 
+  // Validator save
   const saveValidator = async () => {
+    if (!valStatus) return;
     valStatus.textContent = "Sauvegarde...";
     try {
       const res = await fetch(`${apiBase}/admin/validator`, {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({
-          name: valName.value.trim(),
-          public_key: valPub.value.trim(),
-          private_key: valPriv.value.trim(),
-          stake: parseInt(valStake.value || "1", 10)
+          name: (valName?.value || "").trim(),
+          public_key: (valPub?.value || "").trim(),
+          private_key: (valPriv?.value || "").trim(),
+          stake: parseInt(valStake?.value || "1", 10)
         })
       });
       const data = await handleResponse(res);
       valStatus.textContent = "OK";
-      logOutput.textContent = JSON.stringify(data, null, 2);
+      if (logOutput) logOutput.textContent = JSON.stringify(data, null, 2);
     } catch (e) {
       valStatus.textContent = "Erreur: " + e.message;
     }
   };
 
+  // Load profile
   const loadProfile = async () => {
+    if (!valStatus) return;
     valStatus.textContent = "Chargement...";
     try {
       const res = await fetch(`${apiBase}/admin/validator/info`, { headers: headers() });
       const data = await handleResponse(res);
       if (data.validator) {
-        valName.value = data.validator.name || "";
-        valPub.value = data.validator.pubkey || data.validator.public_key || "";
-        valStake.value = data.validator.stake || 1;
+        if (valName) valName.value = data.validator.name || "";
+        if (valPub) valPub.value = data.validator.pubkey || data.validator.public_key || "";
+        if (valStake) valStake.value = data.validator.stake || 1;
       }
-      if (data.private_key) {
+      if (data.private_key && valPriv) {
         valPriv.value = data.private_key;
       }
-      rewardsBox.textContent = JSON.stringify(data.rewards || {}, null, 2);
-      quickStatus.textContent = JSON.stringify(data.validator || {}, null, 2);
+      if (rewardsBox) rewardsBox.textContent = JSON.stringify(data.rewards || {}, null, 2);
+      if (quickStatus) quickStatus.textContent = JSON.stringify(data.validator || {}, null, 2);
       valStatus.textContent = "Profil chargé.";
     } catch (e) {
       valStatus.textContent = "Erreur: " + e.message;
     }
   };
 
-  restartNodeBtn.onclick = () => restartService("fre_node");
-  restartDashBtn.onclick = () => restartService("fre_dashboard");
-  runUpdateBtn.onclick = runUpdate;
-  refreshStatusBtn.onclick = refreshStatus;
-  const saveValidatorBtn = document.getElementById("saveValidator");
-  if (saveValidatorBtn) saveValidatorBtn.onclick = saveValidator;
-  loadProfileBtn.onclick = loadProfile;
-  if (generateKeysBtn) generateKeysBtn.onclick = async () => {
+  // Generate keys (local fallback to backend)
+  const generateKeys = async () => {
+    if (!valStatus) return;
     valStatus.textContent = "Génération en cours...";
     const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
@@ -160,42 +175,42 @@
         keys = await generateRemote();
         valStatus.textContent = "Clés générées côté nœud.";
       }
-      valPub.value = keys.pub;
-      valPriv.value = keys.priv;
+      if (valPub) valPub.value = keys.pub;
+      if (valPriv) valPriv.value = keys.priv;
     } catch (e) {
       valStatus.textContent = "Erreur génération: " + e.message;
     }
   };
 
-  if (regenerateKeysBtn) regenerateKeysBtn.onclick = async () => {
-    const warning = "Re-générer les clés va invalider les anciennes. Sauvegardez vos clés actuelles avant de continuer. Continuer ?";
+  const regenerateKeys = async () => {
+    const warning = "Re-générer va invalider les clés actuelles. Sauvegardez-les avant de continuer. Continuer ?";
     if (!window.confirm(warning)) {
-      valStatus.textContent = "Re-génération annulée.";
+      if (valStatus) valStatus.textContent = "Re-génération annulée.";
       return;
     }
-    await generateKeysBtn.onclick();
+    await generateKeys();
   };
 
-  // Wi-Fi domestique (stockage local)
+  // Wi-Fi domestique (stockage local + apply)
   const loadWifi = () => {
-    wifiSsid.value = localStorage.getItem("fre_wifi_ssid") || "";
-    wifiPass.value = localStorage.getItem("fre_wifi_pass") || "";
+    if (wifiSsid) wifiSsid.value = localStorage.getItem("fre_wifi_ssid") || "";
+    if (wifiPass) wifiPass.value = localStorage.getItem("fre_wifi_pass") || "";
   };
-  saveWifiBtn.onclick = () => {
-    localStorage.setItem("fre_wifi_ssid", wifiSsid.value.trim());
-    localStorage.setItem("fre_wifi_pass", wifiPass.value);
-    wifiStatus.textContent = "Wi‑Fi enregistré localement.";
+  const saveWifiLocal = () => {
+    if (wifiSsid) localStorage.setItem("fre_wifi_ssid", wifiSsid.value.trim());
+    if (wifiPass) localStorage.setItem("fre_wifi_pass", wifiPass.value);
+    if (wifiStatus) wifiStatus.textContent = "Wi‑Fi enregistré localement.";
   };
-
-  applyWifiBtn.onclick = async () => {
+  const applyWifi = async () => {
+    if (!wifiStatus) return;
     wifiStatus.textContent = "Application en cours... (le hotspot peut s'arrêter)";
     try {
       const res = await fetch(`${apiBase}/admin/wifi`, {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({
-          ssid: wifiSsid.value.trim(),
-          password: wifiPass.value,
+          ssid: (wifiSsid?.value || "").trim(),
+          password: wifiPass?.value || "",
           country: "FR"
         })
       });
@@ -208,19 +223,79 @@
 
   // Wallet TON (stockage local)
   const loadTon = () => {
-    tonAddr.value = localStorage.getItem("fre_ton_addr") || "";
+    if (tonAddr) tonAddr.value = localStorage.getItem("fre_ton_addr") || "";
   };
-  saveTonBtn.onclick = () => {
-    localStorage.setItem("fre_ton_addr", tonAddr.value.trim());
-    tonStatus.textContent = "Adresse TON enregistrée localement.";
+  const saveTonLocal = () => {
+    if (tonAddr) localStorage.setItem("fre_ton_addr", tonAddr.value.trim());
+    if (tonStatus) tonStatus.textContent = "Adresse TON enregistrée localement.";
   };
 
   // Modal token
-  // Pas de champ token à l'écran pour le moment : utilise le stockage existant (si déjà enregistré dans le navigateur)
+  const modal = document.getElementById("tokenModal");
+  const modalInput = document.getElementById("tokenModalInput");
+  const modalSave = document.getElementById("tokenModalSave");
+  const modalCancel = document.getElementById("tokenModalCancel");
 
-  // Chargement des données locales
+  const showModal = () => {
+    if (modal) modal.classList.remove("hidden");
+    if (modalInput) modalInput.value = loadToken();
+  };
+  const hideModal = () => {
+    if (modal) modal.classList.add("hidden");
+  };
+
+  // Bind handlers
+  if (saveTokenBtn) saveTokenBtn.onclick = () => {
+    const t = tokenInput?.value.trim() || "";
+    if (!t) {
+      if (actionStatus) actionStatus.textContent = "Token manquant.";
+      return;
+    }
+    saveToken(t);
+    if (actionStatus) actionStatus.textContent = "Token enregistré.";
+    hideModal();
+    refreshStatus();
+  };
+  if (clearTokenBtn) clearTokenBtn.onclick = () => {
+    saveToken("");
+    if (tokenInput) tokenInput.value = "";
+    if (actionStatus) actionStatus.textContent = "Token effacé.";
+  };
+  if (modalSave) modalSave.onclick = () => {
+    const t = modalInput?.value.trim() || "";
+    if (!t) {
+      if (actionStatus) actionStatus.textContent = "Token manquant.";
+      return;
+    }
+    saveToken(t);
+    if (tokenInput) tokenInput.value = t;
+    hideModal();
+    refreshStatus();
+  };
+  if (modalCancel) modalCancel.onclick = hideModal;
+
+  if (refreshStatusBtn) refreshStatusBtn.onclick = refreshStatus;
+  if (restartNodeBtn) restartNodeBtn.onclick = () => restartService("fre_node");
+  if (restartDashBtn) restartDashBtn.onclick = () => restartService("fre_dashboard");
+  if (runUpdateBtn) runUpdateBtn.onclick = runUpdate;
+
+  if (saveValidatorBtn) saveValidatorBtn.onclick = saveValidator;
+  if (generateKeysBtn) generateKeysBtn.onclick = generateKeys;
+  if (regenerateKeysBtn) regenerateKeysBtn.onclick = regenerateKeys;
+
+  if (saveWifiBtn) saveWifiBtn.onclick = saveWifiLocal;
+  if (applyWifiBtn) applyWifiBtn.onclick = applyWifi;
+
+  if (saveTonBtn) saveTonBtn.onclick = saveTonLocal;
+
+  // Init
   loadWifi();
   loadTon();
 
-  refreshStatus();
+  if (tokenInput) tokenInput.value = loadToken();
+  if (!loadToken()) {
+    showModal();
+  } else {
+    refreshStatus();
+  }
 })();
