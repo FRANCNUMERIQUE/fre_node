@@ -37,17 +37,21 @@ MEMPOOL_TTL_SEC = 600       # expire après 10 minutes
 MEMPOOL_MAX_SIZE = 10000
 
 # ===========================
-# VALIDATEUR PRINCIPAL (PoA)
+# VALIDATEUR PRINCIPAL (PoA / identité locale)
 # ===========================
+# Configure via env pour éviter de commit une clé privée.
 
-VALIDATOR_PUBLIC_KEY = None   # sera rempli au lancement
-VALIDATOR_PRIVATE_KEY = None  # idem
+VALIDATOR = {
+    "name": os.getenv("FRE_VALIDATOR_NAME", NODE_NAME),
+    "public_key": os.getenv("FRE_VALIDATOR_PUBKEY", ""),  # base64url
+}
+VALIDATOR_PRIVATE_KEY = os.getenv("FRE_VALIDATOR_PRIVKEY", "")  # base64url ed25519
 
 # ===========================
 # VALIDATEURS (mPoS light)
 # ===========================
 VALIDATORS_FILE = os.path.join(DATA_DIR, "validators.json")
-VALIDATOR_PRIVKEY_ENV = os.getenv("FRE_VALIDATOR_PRIVKEY")
+VALIDATOR_PRIVKEY_ENV = VALIDATOR_PRIVATE_KEY or os.getenv("FRE_VALIDATOR_PRIVKEY")
 
 # ===========================
 # TRANSACTIONS (FORMAT STRICT)
