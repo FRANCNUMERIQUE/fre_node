@@ -6,6 +6,7 @@
         "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
         "validator": "genesis",
         "state_root": "",
-        "hash": "GENESIS_HASH"
+        "merkle_root": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "hash": "c828b81bdbf1651b474cea5b4997a52c1f4640d6f7d54f402eb67a8403a65837"
     }
 ]
