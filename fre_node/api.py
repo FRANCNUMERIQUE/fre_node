@@ -270,6 +270,7 @@ def admin_validator_info(x_admin_token: str = Header(default="")):
 
 
 @app.get("/admin/validator/generate")
+@app.post("/admin/validator/generate")
 def admin_validator_generate(x_admin_token: str = Header(default="")):
     """
     Génère une paire de clés Ed25519 côté nœud.
