@@ -1,12 +1,10 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.responses import JSONResponse
 import uvicorn
 import requests
 import socket
-import os
 
 
 app = FastAPI(title="FRE Dashboard")
@@ -85,4 +83,3 @@ def mempool():
 # ------------------------------
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
-
