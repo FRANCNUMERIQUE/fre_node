@@ -34,3 +34,10 @@ INITIAL_BALANCE = 1000      # pour les nouveaux wallets
 
 VALIDATOR_PUBLIC_KEY = None   # sera rempli au lancement
 VALIDATOR_PRIVATE_KEY = None  # idem
+
+# ===========================
+# MODE DEV (validation souple)
+# ===========================
+# En mode DEV, les transactions de test peuvent passer sans adresse TON ni signature
+# stricte (utile pour les démos et tests manuels).
+DEV_MODE = os.getenv("FRE_DEV_MODE", "true").lower() in ("1", "true", "yes")

@@ -2,6 +2,7 @@ import hashlib
 import base64
 from .utils import ton_decode, verify_signature
 from .state import get_global_state
+from .config import INITIAL_BALANCE, DEV_MODE
 
 class Validator:
     """
@@ -35,6 +36,30 @@ class Validator:
         required = ["from", "to", "amount", "nonce", "signature"]
         if not all(k in tx for k in required):
             return False
+
+        # ---------------------------
+        # MODE DEV : validation souple
+        # ---------------------------
+        if DEV_MODE:
+            if not isinstance(tx["amount"], int) or tx["amount"] <= 0:
+                print("[VALIDATOR][DEV] Montant invalide.")
+                return False
+
+            expected_nonce = self.state.get_nonce(tx["from"])
+            if tx["nonce"] != expected_nonce:
+                print(f"[VALIDATOR][DEV] Nonce incorrect. Attendu : {expected_nonce}")
+                return False
+
+            # Provisionne l'adresse émettrice une seule fois (faucet simple)
+            self.state.create_wallet_if_needed(tx["from"], INITIAL_BALANCE)
+            self.state.create_wallet_if_needed(tx["to"], 0)
+
+            if self.state.get_balance(tx["from"]) < tx["amount"]:
+                print("[VALIDATOR][DEV] Balance insuffisante.")
+                return False
+
+            # En mode dev on ne vérifie pas la signature/format TON strict
+            return True
 
         # ---------------------------
         # 1) VALIDATION ADRESSES TON

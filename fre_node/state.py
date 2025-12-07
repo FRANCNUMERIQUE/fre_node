@@ -50,13 +50,14 @@ class State:
     def get_balance(self, addr: str) -> int:
         return self.balances.get(addr, 0)
 
-    def create_wallet_if_needed(self, addr: str):
+    def create_wallet_if_needed(self, addr: str, initial_balance: int = 0):
         """
-        Initialise un wallet si absent sans créditer de fonds supplémentaires
-        (évite la création monétaire implicite lors d'une première réception).
+        Initialise un wallet si absent.
+        En mode normal on ne cr?dite pas par d?faut pour ?viter la cr?ation mon?taire
+        implicite. initial_balance est utile en mode dev/tests.
         """
         if addr not in self.balances:
-            self.balances[addr] = 0
+            self.balances[addr] = max(initial_balance, 0)
             self.nonces[addr] = 0
             self._save()
 
