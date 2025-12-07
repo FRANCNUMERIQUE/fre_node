@@ -29,6 +29,7 @@
   saveTokenBtn.onclick = () => {
     saveToken(tokenInput.value.trim());
     actionStatus.textContent = "Token enregistré.";
+    maybeHideModal();
   };
   clearTokenBtn.onclick = () => {
     saveToken("");
@@ -108,5 +109,33 @@
   refreshStatusBtn.onclick = refreshStatus;
   document.getElementById("saveValidator").onclick = saveValidator;
 
-  refreshStatus();
+  // Modal token
+  const modal = document.getElementById("tokenModal");
+  const modalInput = document.getElementById("tokenModalInput");
+  const modalSave = document.getElementById("tokenModalSave");
+  const modalCancel = document.getElementById("tokenModalCancel");
+
+  const showModal = () => {
+    modal.classList.remove("hidden");
+    modalInput.value = loadToken();
+  };
+  const hideModal = () => modal.classList.add("hidden");
+  const maybeHideModal = () => {
+    if (loadToken()) hideModal();
+  };
+
+  modalSave.onclick = () => {
+    saveToken(modalInput.value.trim());
+    tokenInput.value = loadToken();
+    hideModal();
+    refreshStatus();
+  };
+  modalCancel.onclick = () => hideModal();
+
+  if (!loadToken()) {
+    showModal();
+  } else {
+    refreshStatus();
+  }
+  // si token existe déjà, on a déjà lancé refreshStatus
 })();
