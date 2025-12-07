@@ -7,7 +7,7 @@ User=aliasvava
 WorkingDirectory=/home/aliasvava/fre_node
 Environment=PYTHONPATH=/home/aliasvava/fre_node
 # Token admin pour /admin/update (à remplacer et gérer en override si besoin)
-Environment=FRE_ADMIN_TOKEN=CHANGER_LE_TOKEN_ICI
+Environment=FRE_ADMIN_TOKEN=f83279d1d07305e670bb743ee4d28edefd96b19f025246eaaa5d07700e3a491c
 ExecStart=/home/aliasvava/fre_node/venv/bin/python3 /home/aliasvava/fre_node/main.py
 Restart=always
 
