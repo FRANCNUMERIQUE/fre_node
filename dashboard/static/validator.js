@@ -38,9 +38,15 @@
   tokenInput.value = loadToken();
 
   saveTokenBtn.onclick = () => {
-    saveToken(tokenInput.value.trim());
+    const t = tokenInput.value.trim();
+    if (!t) {
+      actionStatus.textContent = "Token manquant.";
+      return;
+    }
+    saveToken(t);
     actionStatus.textContent = "Token enregistré.";
     maybeHideModal();
+    refreshStatus();
   };
   clearTokenBtn.onclick = () => {
     saveToken("");
@@ -216,7 +222,12 @@
   };
 
   modalSave.onclick = () => {
-    saveToken(modalInput.value.trim());
+    const t = modalInput.value.trim();
+    if (!t) {
+      actionStatus.textContent = "Token manquant.";
+      return;
+    }
+    saveToken(t);
     tokenInput.value = loadToken();
     hideModal();
     refreshStatus();
@@ -232,5 +243,4 @@
   } else {
     refreshStatus();
   }
-  // si token existe déjà, on a déjà lancé refreshStatus
 })();
