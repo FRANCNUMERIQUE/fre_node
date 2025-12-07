@@ -54,6 +54,16 @@ class P2PNode:
             print(f"[P2P] WebSocket server on {P2P_PORT}")
             await asyncio.Future()  # run forever
 
+    def _save_peers(self):
+        Path(PEERS_FILE).parent.mkdir(parents=True, exist_ok=True)
+        Path(PEERS_FILE).write_text(json.dumps(list(self.peers), indent=2))
+
+    def add_peer(self, host: str):
+        if host and host not in self.peers:
+            self.peers.add(host)
+            self._save_peers()
+            print(f"[P2P] New peer {host}")
+
     async def connect_peers(self):
         if not self.signing_key:
             return
@@ -85,6 +95,9 @@ class P2PNode:
 
         # respond to requests
         if msg.get("type") == "HELLO":
+            sender_host = msg["payload"].get("host")
+            if sender_host:
+                self.add_peer(sender_host)
             await self._send_hello(websocket)
 
     def _sender_from_msg(self, msg: dict):
@@ -116,8 +129,11 @@ class P2PNode:
             return False
 
     async def _send_hello(self, websocket):
-        msg = self._build_message("HELLO", {"node": self.pubkey_b64, "ts": int(time.time())})
+        msg = self._build_message("HELLO", {"node": self.pubkey_b64, "host": self._local_host(), "ts": int(time.time())})
         await websocket.send(json.dumps(msg))
+
+    def _local_host(self) -> str:
+        return "127.0.0.1"  # placeholder; remplacer par IP publique si besoin
 
     def _build_message(self, msg_type: str, payload: dict) -> dict:
         if not self.signing_key:
@@ -143,6 +159,16 @@ class P2PNode:
                     await ws.send(json.dumps(msg))
             except Exception:
                 continue
+
+    async def send_to(self, peer: str, msg_type: str, payload: dict):
+        if not self.signing_key:
+            return
+        msg = self._build_message(msg_type, payload)
+        try:
+            async with websockets.connect(f"ws://{peer}:{P2P_PORT}") as ws:
+                await ws.send(json.dumps(msg))
+        except Exception:
+            return
 
     # Convenience wrappers
     async def broadcast_block(self, block: dict):
