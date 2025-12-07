@@ -94,7 +94,7 @@ def balance(address: str):
 
 @app.get("/mempool")
 def mempool_content():
-    return mempool.transactions
+    return mempool.list_transactions()
 
 # ===============================
 #         TRANSACTIONS (POST)

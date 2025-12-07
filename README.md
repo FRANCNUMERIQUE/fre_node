@@ -69,3 +69,9 @@ Wallet helper
 Mises à jour automatiques (cron)
 --------------------------------
 - `update/install_update.sh` installe un cron (toutes les 10 min) qui appelle `update/update_node.sh` (git pull, pip install, restart, backup).
+
+Mempool (pro)
+-------------
+- Persistance disque (`db/mempool.json`), TTL 10 min, anti-duplication.
+- Priorite par `fee` decroissant puis anciennete.
+- Limite de taille configurable (`MEMPOOL_MAX_SIZE`).

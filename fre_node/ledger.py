@@ -6,35 +6,27 @@ from .block import Block
 
 class Ledger:
     """
-    Ledger de la blockchain FRE_NODE.
-    Stockage simple JSON :
-    - liste de blocs
-    - persistance totale
-    ""
+    Simple JSON ledger (full chain persisted). Includes basic validation and atomic writes.
+    """
 
     def __init__(self):
         if not os.path.exists(CHAIN_FILE):
-            print("[LEDGER] Cr?ation d'un nouveau fichier chain.json")
+            print("[LEDGER] Creating chain.json")
             self._write_chain([])
         self.chain = self._read_chain()
         self._validate_chain_on_load()
 
     # =====================================
-    # LECTURE / ECRITURE BASIQUE DU LEDGER
+    # READ / WRITE
     # =====================================
 
     def _read_chain(self):
         with open(CHAIN_FILE, "r") as f:
             raw_chain = json.load(f)
-        normalized = []
-        for blk in raw_chain:
-            normalized.append(self._normalize_block(blk))
-        return normalized
+        return [self._normalize_block(blk) for blk in raw_chain]
 
     def _write_chain(self, chain):
-        """
-        Ecriture atomique + backup simple (chain.json.bak) pour recovery basique.
-        """
+        """Atomic write with backup chain.json.bak"""
         tmp_path = CHAIN_FILE + ".tmp"
         bak_path = CHAIN_FILE + ".bak"
 
@@ -74,7 +66,7 @@ class Ledger:
         return normalized
 
     # =====================================
-    # RECUPERATION DE BLOCS
+    # GETTERS
     # =====================================
 
     def get_latest_block(self):
@@ -94,23 +86,23 @@ class Ledger:
         return len(self.chain)
 
     # =====================================
-    # AJOUT D'UN BLOC
+    # ADD BLOCK
     # =====================================
 
     def add_block(self, block):
         blk_dict = block.to_dict()
 
         if not self._validate_new_block(blk_dict):
-            print("[LEDGER] Bloc rejet? (validation)")
+            print("[LEDGER] Block rejected (validation)")
             return False
 
         self.chain.append(blk_dict)
         self._write_chain(self.chain)
-        print(f"[LEDGER] Bloc #{blk_dict['index']} ajout?.")
+        print(f"[LEDGER] Block #{blk_dict['index']} added.")
         return True
 
     # =====================================
-    # VALIDATION DE LA CHAINE / BLOCS
+    # VALIDATION
     # =====================================
 
     def _validate_new_block(self, blk: dict) -> bool:
@@ -118,14 +110,14 @@ class Ledger:
 
         if latest:
             if blk.get("index") != latest["index"] + 1:
-                print("[LEDGER] Index invalide.")
+                print("[LEDGER] Invalid index")
                 return False
             if blk.get("prev_hash") != latest["hash"]:
-                print("[LEDGER] prev_hash invalide.")
+                print("[LEDGER] Invalid prev_hash")
                 return False
         else:
             if blk.get("index") != 0:
-                print("[LEDGER] Genesis invalide.")
+                print("[LEDGER] Invalid genesis index")
                 return False
 
         try:
@@ -138,11 +130,11 @@ class Ledger:
                 state_root=blk.get("state_root", ""),
             ).hash
         except Exception:
-            print("[LEDGER] Bloc mal form?.")
+            print("[LEDGER] Malformed block")
             return False
 
         if blk.get("hash") != computed:
-            print("[LEDGER] Hash invalide.")
+            print("[LEDGER] Invalid hash")
             return False
 
         return True
@@ -159,11 +151,11 @@ class Ledger:
                     state_root=blk.get("state_root", ""),
                 ).hash
             except Exception:
-                raise ValueError(f"Bloc #{i} mal form?")
+                raise ValueError(f"Block #{i} malformed")
 
             if blk.get("hash") != computed:
-                raise ValueError(f"Bloc #{i} hash invalide")
+                raise ValueError(f"Block #{i} invalid hash")
 
             if i > 0 and blk.get("prev_hash") != self.chain[i - 1]["hash"]:
-                raise ValueError(f"Bloc #{i} cha?nage invalide")
+                raise ValueError(f"Block #{i} invalid chain link")
 

@@ -25,6 +25,31 @@ def canonical_tx_message(tx: dict) -> bytes:
     ]
     return "|".join(parts).encode()
 
+
+# ===========================
+# BASE64URL UTIL
+# ===========================
+
+def b64url_decode(data: str) -> bytes:
+    padded = data + "=" * ((4 - len(data) % 4) % 4)
+    return base64.urlsafe_b64decode(padded)
+
+
+# ===========================
+# TX ID
+# ===========================
+
+def compute_tx_id(tx: dict) -> str:
+    """Identifiant de transaction : sha256(message canonique + signature brute)."""
+    sig_bytes = b""
+    if "signature" in tx and tx["signature"]:
+        try:
+            sig_bytes = b64url_decode(tx["signature"])
+        except Exception:
+            sig_bytes = b""
+    msg = canonical_tx_message(tx)
+    return hashlib.sha256(msg + sig_bytes).hexdigest()
+
 # ===========================
 # TON STRICT — CRC16
 # ===========================
