@@ -19,6 +19,8 @@ echo "[INSTALL] Installing/updating FRE services..."
 sudo cp "$SCRIPT_DIR/../system/fre_node.service" /etc/systemd/system/fre_node.service
 sudo cp "$SCRIPT_DIR/../system/fre_dashboard.service" /etc/systemd/system/fre_dashboard.service
 [ -f "$SCRIPT_DIR/../system/fre_portal.service" ] && sudo cp "$SCRIPT_DIR/../system/fre_portal.service" /etc/systemd/system/fre_portal.service
+[ -f "$SCRIPT_DIR/../system/wlan0-sta.service" ] && sudo cp "$SCRIPT_DIR/../system/wlan0-sta.service" /etc/systemd/system/wlan0-sta.service
+[ -f "$SCRIPT_DIR/../system/fre_nat.service" ] && sudo cp "$SCRIPT_DIR/../system/fre_nat.service" /etc/systemd/system/fre_nat.service
 
 # Hotspot dependencies
 echo "[INSTALL] Installing hostapd/dnsmasq/avahi/tcpdump..."
@@ -35,7 +37,7 @@ sudo systemctl disable wpa_supplicant@wlan0.service 2>/dev/null || true
 # Stop/disable global wpa_supplicant (certain images utilisent l'instance globale)
 sudo systemctl stop wpa_supplicant.service 2>/dev/null || true
 sudo systemctl disable wpa_supplicant.service 2>/dev/null || true
-# Si NetworkManager est présent, rendre wlan0 unmanaged
+# Si NetworkManager est present, rendre wlan0 unmanaged
 if command -v nmcli >/dev/null 2>&1; then
   sudo nmcli dev set wlan0 managed no 2>/dev/null || true
   sudo nmcli dev disconnect wlan0 2>/dev/null || true
@@ -57,10 +59,21 @@ EOF
 
 # dnsmasq config
 if [ -f "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" ]; then
-  # sauvegarde l'existant si présent
   [ -f /etc/dnsmasq.conf ] && sudo cp /etc/dnsmasq.conf /etc/dnsmasq.conf.bak 2>/dev/null || true
   sudo cp "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" /etc/dnsmasq.conf
 fi
+
+# wpa_supplicant conf (station sur interface virtuelle wlan0_sta)
+if [ -f "$SCRIPT_DIR/../hotspot/wpa_supplicant-wlan0_sta.conf.example" ]; then
+  sudo cp "$SCRIPT_DIR/../hotspot/wpa_supplicant-wlan0_sta.conf.example" /etc/wpa_supplicant/wpa_supplicant-wlan0_sta.conf
+fi
+# Ensure wpa_supplicant@wlan0_sta depends on interface creation
+sudo mkdir -p /etc/systemd/system/wpa_supplicant@wlan0_sta.service.d
+cat <<'EOF' | sudo tee /etc/systemd/system/wpa_supplicant@wlan0_sta.service.d/override.conf >/dev/null
+[Unit]
+After=wlan0-sta.service
+Requires=wlan0-sta.service
+EOF
 
 # Static IP on wlan0
 if systemctl list-unit-files | grep -q systemd-networkd.service; then
@@ -108,6 +121,10 @@ sudo iptables -F
 sudo iptables -t nat -F
 sudo nft flush ruleset 2>/dev/null || true
 
+# Enable forwarding + NAT via wlan0_sta when present
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo iptables -t nat -C POSTROUTING -o wlan0_sta -j MASQUERADE 2>/dev/null || sudo iptables -t nat -A POSTROUTING -o wlan0_sta -j MASQUERADE
+
 # Reload systemd
 sudo systemctl daemon-reload
 
@@ -118,6 +135,9 @@ sudo systemctl enable fre_dashboard.service
 sudo systemctl enable hostapd
 sudo systemctl enable dnsmasq
 sudo systemctl enable avahi-daemon
+sudo systemctl enable wpa_supplicant@wlan0_sta.service 2>/dev/null || true
+sudo systemctl enable wlan0-sta.service 2>/dev/null || true
+sudo systemctl enable fre_nat.service 2>/dev/null || true
 
 # Restart services
 sudo systemctl restart fre_node.service
@@ -126,6 +146,9 @@ sudo systemctl restart fre_dashboard.service
 sudo systemctl restart hostapd
 sudo systemctl restart dnsmasq
 sudo systemctl restart avahi-daemon
+sudo systemctl restart wlan0-sta.service 2>/dev/null || true
+sudo systemctl restart wpa_supplicant@wlan0_sta.service 2>/dev/null || true
+sudo systemctl restart fre_nat.service 2>/dev/null || true
 
 echo "[INSTALL] FRE services installed and started."
 echo "[DONE] Install complete."
