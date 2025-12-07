@@ -4,7 +4,7 @@ from .block import Block
 import os
 from .config import MAX_TX_PER_BLOCK, NODE_NAME, BLOCK_REWARD, VALIDATOR_PRIVKEY_ENV
 from .utils import load_signing_key, sign_message
-from .validators import load_validators, select_producer
+from .validator_set import load_validators, select_producer
 from .state import get_global_state
 
 class Consensus:

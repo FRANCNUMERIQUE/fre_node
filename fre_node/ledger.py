@@ -2,7 +2,7 @@ import json
 import os
 from .config import CHAIN_FILE
 from .block import Block
-from .validators import load_validators, select_producer, get_pubkey
+from .validator_set import load_validators, select_producer, get_pubkey
 from .utils import verify_signature_raw
 
 
