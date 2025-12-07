@@ -23,8 +23,8 @@
   const tonStatus = document.getElementById("tonStatus");
   const saveTonBtn = document.getElementById("saveTon");
 
-  const loadToken = () => localStorage.getItem("fre_admin_token") || "";
-  const saveToken = (t) => localStorage.setItem("fre_admin_token", t || "");
+  const loadToken = () => localStorage.getItem("fre_validator_token") || "";
+  const saveToken = (t) => localStorage.setItem("fre_validator_token", t || "");
   const headers = () => {
     const h = { "Content-Type": "application/json" };
     const tok = loadToken();
