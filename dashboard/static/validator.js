@@ -5,6 +5,7 @@
   const valStake = document.getElementById("valStake");
   const valStatus = document.getElementById("valStatus");
   const generateKeysBtn = document.getElementById("generateKeys");
+  const regenerateKeysBtn = document.getElementById("regenerateKeys");
   const loadProfileBtn = document.getElementById("loadProfile");
   const refreshStatusBtn = document.getElementById("refreshStatus");
   const quickStatus = document.getElementById("quickStatus");
@@ -163,6 +164,15 @@
     } catch (e) {
       valStatus.textContent = "Erreur génération: " + e.message;
     }
+  };
+
+  regenerateKeysBtn.onclick = async () => {
+    const warning = "Re-générer les clés va invalider les anciennes. Sauvegardez vos clés actuelles avant de continuer. Continuer ?";
+    if (!window.confirm(warning)) {
+      valStatus.textContent = "Re-génération annulée.";
+      return;
+    }
+    await generateKeysBtn.onclick();
   };
 
   // Wi-Fi domestique (stockage local)
