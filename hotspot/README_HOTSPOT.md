@@ -37,6 +37,11 @@ sudo systemctl disable wpa_supplicant.service
 sudo nmcli dev set wlan0 managed no
 sudo nmcli dev disconnect wlan0
 ```
+- Bloquer dhcpcd en client sur wlan0 (si dhcpcd est installé) :
+```
+sudo sed -i '/^denyinterfaces wlan0/!b;h' /etc/dhcpcd.conf 2>/dev/null || true
+grep -q '^denyinterfaces wlan0' /etc/dhcpcd.conf || echo 'denyinterfaces wlan0' | sudo tee -a /etc/dhcpcd.conf
+```
 
 ## 2ter) Forcer l’adresse IP immédiatement
 Si le DHCP client reste actif, forcez l’adresse manuellement :

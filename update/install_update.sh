@@ -44,8 +44,9 @@ fi
 # Unblock RF if blocked
 rfkill list 2>/dev/null | grep -q "Soft blocked: yes" && sudo rfkill unblock all || true
 
-# hostapd config
-if [ ! -f /etc/hostapd/hostapd.conf ] && [ -f "$SCRIPT_DIR/../hotspot/hostapd.conf.example" ]; then
+# hostapd config (remplace en conservant un backup)
+if [ -f "$SCRIPT_DIR/../hotspot/hostapd.conf.example" ]; then
+  [ -f /etc/hostapd/hostapd.conf ] && sudo cp /etc/hostapd/hostapd.conf /etc/hostapd/hostapd.conf.bak 2>/dev/null || true
   sudo cp "$SCRIPT_DIR/../hotspot/hostapd.conf.example" /etc/hostapd/hostapd.conf
 fi
 cat <<'EOF' | sudo tee /etc/default/hostapd >/dev/null
@@ -84,6 +85,7 @@ else
     cat <<'EOF' | sudo tee -a /etc/dhcpcd.conf >/dev/null
 
 # FRE_NODE hotspot
+denyinterfaces wlan0
 interface wlan0
 static ip_address=192.168.50.1/24
 nohook wpa_supplicant
@@ -98,6 +100,8 @@ fi
 sudo ip addr flush dev wlan0 2>/dev/null || true
 sudo ip addr add 192.168.50.1/24 dev wlan0 2>/dev/null || true
 sudo ip link set wlan0 up 2>/dev/null || true
+# Stop any dhclient on wlan0
+pgrep -fa "dhclient.*wlan0" && sudo pkill -f "dhclient.*wlan0" || true
 
 # Reload systemd
 sudo systemctl daemon-reload
