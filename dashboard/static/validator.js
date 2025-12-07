@@ -8,6 +8,7 @@
   const valStake = document.getElementById("valStake");
   const valStatus = document.getElementById("valStatus");
   const generateKeysBtn = document.getElementById("generateKeys");
+  const loadProfileBtn = document.getElementById("loadProfile");
   const refreshStatusBtn = document.getElementById("refreshStatus");
   const quickStatus = document.getElementById("quickStatus");
   const restartNodeBtn = document.getElementById("restartNode");
@@ -22,6 +23,7 @@
   const tonAddr = document.getElementById("tonAddr");
   const tonStatus = document.getElementById("tonStatus");
   const saveTonBtn = document.getElementById("saveTon");
+  const rewardsBox = document.getElementById("rewardsBox");
 
   const loadToken = () => localStorage.getItem("fre_validator_token") || "";
   const saveToken = (t) => localStorage.setItem("fre_validator_token", t || "");
@@ -111,11 +113,33 @@
     }
   };
 
+  const loadProfile = async () => {
+    valStatus.textContent = "Chargement...";
+    try {
+      const res = await fetch(`${apiBase}/admin/validator/info`, { headers: headers() });
+      const data = await handleResponse(res);
+      if (data.validator) {
+        valName.value = data.validator.name || "";
+        valPub.value = data.validator.pubkey || data.validator.public_key || "";
+        valStake.value = data.validator.stake || 1;
+      }
+      if (data.private_key) {
+        valPriv.value = data.private_key;
+      }
+      rewardsBox.textContent = JSON.stringify(data.rewards || {}, null, 2);
+      quickStatus.textContent = JSON.stringify(data.validator || {}, null, 2);
+      valStatus.textContent = "Profil chargé.";
+    } catch (e) {
+      valStatus.textContent = "Erreur: " + e.message;
+    }
+  };
+
   restartNodeBtn.onclick = () => restartService("fre_node");
   restartDashBtn.onclick = () => restartService("fre_dashboard");
   runUpdateBtn.onclick = runUpdate;
   refreshStatusBtn.onclick = refreshStatus;
   document.getElementById("saveValidator").onclick = saveValidator;
+  loadProfileBtn.onclick = loadProfile;
   generateKeysBtn.onclick = async () => {
     valStatus.textContent = "Génération en cours...";
     try {

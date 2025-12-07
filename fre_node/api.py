@@ -13,6 +13,7 @@ import subprocess
 from pathlib import Path
 import json
 import os
+from typing import Optional
 
 import psutil
 import platform
@@ -232,6 +233,38 @@ def admin_set_validator(
     Path(VALIDATOR_SECRET_FILE).write_text(json.dumps(secret, indent=2))
 
     return {"status": "ok", "validators": validators_data}
+
+
+@app.get("/admin/validator/info")
+def admin_validator_info(x_admin_token: str = Header(default="")):
+    """
+    Retourne les informations du validateur (nom, pubkey, stake) et l'état local (balance, nonce).
+    Utilise le token d'accès (ADMIN_TOKEN) pour protéger l'appel.
+    """
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    validators = load_validators()
+    validator: Optional[dict] = validators[0] if validators else None
+
+    secret = {}
+    if Path(VALIDATOR_SECRET_FILE).exists():
+        try:
+            secret = json.loads(Path(VALIDATOR_SECRET_FILE).read_text())
+        except Exception:
+            secret = {}
+
+    name = validator.get("name") if validator else ""
+    info = {
+        "validator": validator,
+        "private_key": secret.get("private_key", ""),
+        "balance": state.get_balance(name) if name else 0,
+        "nonce": state.get_nonce(name) if name else 0,
+        "rewards": {
+            "fees_total": state.get_balance(name) if name else 0  # placeholder: même champ balance pour l'instant
+        }
+    }
+    return info
 
 # ===============================
 #          LEGACY ROUTES
