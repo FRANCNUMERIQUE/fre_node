@@ -37,6 +37,7 @@ fi
 cat <<'EOF' | sudo tee /etc/default/hostapd >/dev/null
 # FRE Node hotspot defaults
 DAEMON_CONF="/etc/hostapd/hostapd.conf"
+DAEMON_OPTS=""
 EOF
 
 # Config dnsmasq (création si absente)
