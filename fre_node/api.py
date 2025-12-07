@@ -97,6 +97,32 @@ def mempool_content():
     return mempool.list_transactions()
 
 # ===============================
+#          HEALTH / METRICS
+# ===============================
+
+
+@app.get("/health")
+def health():
+    latest = ledger.get_latest_block() or {}
+    return {"status": "ok", "height": latest.get("index", 0), "hash": latest.get("hash", ""), "mempool": mempool.count()}
+
+
+@app.get("/metrics")
+def metrics():
+    latest = ledger.get_latest_block() or {}
+    return {
+        "node": NODE_NAME,
+        "height": latest.get("index", 0),
+        "latest_hash": latest.get("hash", ""),
+        "mempool": mempool.count(),
+        "system": {
+            "cpu_percent": psutil.cpu_percent(),
+            "ram_percent": psutil.virtual_memory().percent,
+            "uptime_sec": time.time() - psutil.boot_time(),
+        },
+    }
+
+# ===============================
 #         TRANSACTIONS (POST)
 # ===============================
 
