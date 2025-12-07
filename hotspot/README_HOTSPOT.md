@@ -27,6 +27,16 @@ sudo systemctl stop wpa_supplicant@wlan0.service
 sudo systemctl disable wpa_supplicant@wlan0.service
 sudo rfkill unblock all
 ```
+- Selon les images, désactivez aussi le service global :
+```
+sudo systemctl stop wpa_supplicant.service
+sudo systemctl disable wpa_supplicant.service
+```
+- Si NetworkManager est installé : rendre wlan0 unmanaged (sinon il repasse en client) :
+```
+sudo nmcli dev set wlan0 managed no
+sudo nmcli dev disconnect wlan0
+```
 
 ## 2ter) Forcer l’adresse IP immédiatement
 Si le DHCP client reste actif, forcez l’adresse manuellement :

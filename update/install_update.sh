@@ -32,6 +32,14 @@ sudo systemctl unmask dnsmasq 2>/dev/null || true
 # Stop/disable wpa_supplicant on wlan0 (avoid client takeover)
 sudo systemctl stop wpa_supplicant@wlan0.service 2>/dev/null || true
 sudo systemctl disable wpa_supplicant@wlan0.service 2>/dev/null || true
+# Stop/disable global wpa_supplicant (certain images utilisent l'instance globale)
+sudo systemctl stop wpa_supplicant.service 2>/dev/null || true
+sudo systemctl disable wpa_supplicant.service 2>/dev/null || true
+# Si NetworkManager est présent, rendre wlan0 unmanaged
+if command -v nmcli >/dev/null 2>&1; then
+  sudo nmcli dev set wlan0 managed no 2>/dev/null || true
+  sudo nmcli dev disconnect wlan0 2>/dev/null || true
+fi
 
 # Unblock RF if blocked
 rfkill list 2>/dev/null | grep -q "Soft blocked: yes" && sudo rfkill unblock all || true
