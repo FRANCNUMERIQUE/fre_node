@@ -125,9 +125,10 @@
   restartDashBtn.onclick = () => restartService("fre_dashboard");
   runUpdateBtn.onclick = runUpdate;
   refreshStatusBtn.onclick = refreshStatus;
-  document.getElementById("saveValidator").onclick = saveValidator;
+  const saveValidatorBtn = document.getElementById("saveValidator");
+  if (saveValidatorBtn) saveValidatorBtn.onclick = saveValidator;
   loadProfileBtn.onclick = loadProfile;
-  generateKeysBtn.onclick = async () => {
+  if (generateKeysBtn) generateKeysBtn.onclick = async () => {
     valStatus.textContent = "Génération en cours...";
     const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
@@ -166,7 +167,7 @@
     }
   };
 
-  regenerateKeysBtn.onclick = async () => {
+  if (regenerateKeysBtn) regenerateKeysBtn.onclick = async () => {
     const warning = "Re-générer les clés va invalider les anciennes. Sauvegardez vos clés actuelles avant de continuer. Continuer ?";
     if (!window.confirm(warning)) {
       valStatus.textContent = "Re-génération annulée.";
