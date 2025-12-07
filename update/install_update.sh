@@ -141,6 +141,19 @@ sudo systemctl enable wlan0-sta.service 2>/dev/null || true
 sudo systemctl enable fre_nat.service 2>/dev/null || true
 sudo systemctl enable dhclient-wlan0_sta.service 2>/dev/null || true
 
+# dnsmasq drop-in to attendre hostapd/wlan0
+sudo mkdir -p /etc/systemd/system/dnsmasq.service.d
+cat <<'EOF' | sudo tee /etc/systemd/system/dnsmasq.service.d/after-hostapd.conf >/dev/null
+[Unit]
+After=hostapd.service wlan0-sta.service
+Wants=hostapd.service
+
+[Service]
+Restart=on-failure
+RestartSec=3
+ExecStartPre=/usr/bin/env bash -c 'ip link show wlan0 >/dev/null 2>&1 && ip addr show wlan0 | grep -q 192.168.50 || exit 1'
+EOF
+
 # Restart services
 sudo systemctl restart fre_node.service
 sudo systemctl restart fre_dashboard.service
