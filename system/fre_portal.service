@@ -5,12 +5,12 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/aliasvava/fre_node
-# Adapter le chemin du venv et du code si nécessaire
-ExecStart=/usr/bin/env bash -c 'cd /home/aliasvava/fre_node && /home/aliasvava/fre_node/venv/bin/uvicorn dashboard.dashboard:app --host 0.0.0.0 --port 80'
-Restart=always
 User=aliasvava
 Group=aliasvava
+WorkingDirectory=/home/aliasvava/fre_node
+# Adapter le chemin du venv et du code si nécessaire
+ExecStart=/bin/bash -lc 'cd /home/aliasvava/fre_node && /home/aliasvava/fre_node/venv/bin/uvicorn dashboard.dashboard:app --host 0.0.0.0 --port 80'
+Restart=always
 Environment="PYTHONUNBUFFERED=1"
 
 [Install]
