@@ -1,0 +1,43 @@
+Mise en service initiale (FRE Node)
+1) Démarrer le nœud
+   - Brancher le nœud au secteur et patienter ~30s.
+   - Le hotspot Wi‑Fi se crée : SSID = FRE_NODE_01, mot de passe = frevalidator.
+
+2) Connexion au hotspot
+   - Depuis un PC ou un mobile, se connecter au Wi‑Fi FRE_NODE_01.
+   - Ouvrir le navigateur sur http://192.168.50.1 ou http://fre-node.local.
+   - Vérifier que le dashboard s’affiche (statut du nœud, bloc genesis).
+
+3) Accéder au profil validateur
+   - Cliquer sur « Ouvrir le profil validateur » ou aller sur http://192.168.50.1/validator.
+   - Saisir le token d’accès (X-Access-Token) puis « Enregistrer le token ».
+
+4) Configurer l’identité du validateur
+   - Dans « Identité / Clés » :
+       * Générer des clés (bouton) ou coller votre clé publique/privée existante (base64url).
+       * Renseigner le nom du validateur et, si nécessaire, le stake.
+       * Cliquer sur « Enregistrer » pour pousser ces infos au nœud.
+
+5) Configurer le Wi‑Fi domestique (optionnel)
+   - Saisir SSID et mot de passe de votre réseau local dans « Wi‑Fi domestique ».
+   - Cliquer sur « Enregistrer (local) » (stocké dans le navigateur, utile pour une future connexion automatique ou configuration manuelle).
+
+6) Lier le wallet TON (optionnel)
+   - Dans « Wallet TON », coller l’adresse TON (EQ…).
+   - Cliquer sur « Lier (local) » (stocké côté navigateur pour les futures fonctionnalités : ancrage, récompenses).
+
+7) Commandes principales (contrôle du nœud)
+   - Redémarrer fre_node
+   - Redémarrer fre_dashboard
+   - Forcer update (exécute le script d’update sur le nœud)
+   Vérifier les retours dans « Journal des opérations ».
+
+8) Vérifications
+   - Sur la page dashboard, vérifier que le nœud est actif (blocs, mempool, CPU/RAM).
+   - Sur la page profil, section « Statut Node / Services », utiliser « Rafraîchir » pour voir l’état des services.
+
+Compléments (page profil validateur)
+- Token : stocké dans le navigateur, peut être effacé via « Effacer » ou la modal.
+- Clés : la génération est locale (WebCrypto), les champs se remplissent puis peuvent être enregistrés côté nœud.
+- Wi‑Fi domestique et Wallet TON : uniquement stockés en local pour l’instant.
+- Récompenses / Infos : section en attente de l’alimentation backend (affichage des rewards/fees).
