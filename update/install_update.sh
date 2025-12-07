@@ -42,15 +42,33 @@ if [ ! -f /etc/dnsmasq.conf ] && [ -f "$SCRIPT_DIR/../hotspot/dnsmasq.conf.examp
   sudo cp "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" /etc/dnsmasq.conf
 fi
 
-# IP statique sur wlan0 (ajout si absent)
-if ! grep -q "FRE_NODE hotspot" /etc/dhcpcd.conf 2>/dev/null; then
-  cat <<'EOF' | sudo tee -a /etc/dhcpcd.conf >/dev/null
+# IP statique sur wlan0
+if systemctl is-active --quiet systemd-networkd; then
+  if [ ! -f /etc/systemd/network/10-fre-hotspot.network ]; then
+    cat <<'EOF' | sudo tee /etc/systemd/network/10-fre-hotspot.network >/dev/null
+[Match]
+Name=wlan0
+
+[Network]
+Address=192.168.50.1/24
+DNS=192.168.50.1
+DHCP=no
+EOF
+  fi
+  sudo systemctl restart systemd-networkd || true
+else
+  if ! grep -q "FRE_NODE hotspot" /etc/dhcpcd.conf 2>/dev/null; then
+    cat <<'EOF' | sudo tee -a /etc/dhcpcd.conf >/dev/null
 
 # FRE_NODE hotspot
 interface wlan0
 static ip_address=192.168.50.1/24
 nohook wpa_supplicant
 EOF
+  fi
+  if systemctl list-unit-files | grep -q dhcpcd.service; then
+    sudo systemctl restart dhcpcd || true
+  fi
 fi
 
 # Rechargement de systemd

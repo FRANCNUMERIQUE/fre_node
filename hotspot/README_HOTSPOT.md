@@ -11,13 +11,14 @@ sudo systemctl disable hostapd dnsmasq
 ```
 
 ## 2) IP statique sur wlan0
-`/etc/dhcpcd.conf` (exemple) :
-```
-interface wlan0
-  static ip_address=192.168.50.1/24
-  nohook wpa_supplicant
-```
-Redémarrer `dhcpcd` ou le Pi.
+- **systemd-networkd** : utilisez `hotspot/wlan0.network.example` vers `/etc/systemd/network/10-fre-hotspot.network` puis `sudo systemctl restart systemd-networkd`.
+- **dhcpcd (Raspbian)** : `/etc/dhcpcd.conf` (exemple) :
+  ```
+  interface wlan0
+    static ip_address=192.168.50.1/24
+    nohook wpa_supplicant
+  ```
+  Puis `sudo systemctl restart dhcpcd` ou reboot.
 
 ## 3) hostapd (point d’accès)
 Copier et adapter `hotspot/hostapd.conf.example` vers `/etc/hostapd/hostapd.conf`, puis définir dans `/etc/default/hostapd` :
