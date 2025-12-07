@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fre_node.config import API_PORT
@@ -6,9 +6,11 @@ from .validator import Validator
 from .mempool import Mempool
 from .ledger import Ledger
 from .state import State
-from .config import NODE_NAME
+from .config import NODE_NAME, ADMIN_TOKEN
 from .validator_set import load_validators
 from .ton_anchor import anchor_client
+import subprocess
+from pathlib import Path
 
 import psutil
 import platform
@@ -116,6 +118,36 @@ def v1_anchor_status():
 @app.get("/v1/mempool")
 def v1_mempool():
     return mempool.list_transactions()
+
+# ===============================
+#          ADMIN (LOCAL)
+# ===============================
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+UPDATE_SCRIPT = REPO_ROOT / "update" / "update_node.sh"
+
+
+@app.post("/admin/update")
+def admin_update(x_admin_token: str = Header(default="")):
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    if not UPDATE_SCRIPT.exists():
+        return JSONResponse({"error": "update script not found"}, status_code=500)
+    try:
+        res = subprocess.run(
+            ["bash", str(UPDATE_SCRIPT)],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        return {
+            "status": "ok" if res.returncode == 0 else "failed",
+            "returncode": res.returncode,
+            "stdout": res.stdout[-1000:],  # tail
+            "stderr": res.stderr[-1000:],
+        }
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 # ===============================
 #          LEGACY ROUTES

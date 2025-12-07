@@ -90,3 +90,8 @@ SNAPSHOT_DIR = os.path.join(DATA_DIR, "snapshots")
 PEERS_FILE = os.path.join(DATA_DIR, "peers.json")
 P2P_PRIVKEY_ENV = os.getenv("FRE_P2P_PRIVKEY", os.getenv("FRE_VALIDATOR_PRIVKEY", ""))
 P2P_BAN_THRESHOLD = 5
+
+# ===========================
+# ADMIN API (broadcast update)
+# ===========================
+ADMIN_TOKEN = os.getenv("FRE_ADMIN_TOKEN", "")
