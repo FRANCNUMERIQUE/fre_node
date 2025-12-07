@@ -70,6 +70,12 @@ class State:
         self.balances[addr] += amount
         self._save()
 
+    def restore(self, balances: dict, nonces: dict):
+        """Restaure l'état depuis un snapshot."""
+        self.balances = balances or {}
+        self.nonces = nonces or {}
+        self._save()
+
     # ============================
     # NONCE MANAGEMENT
     # ============================

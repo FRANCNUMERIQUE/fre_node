@@ -1,6 +1,7 @@
 import asyncio
 import json
 import time
+import base64
 from pathlib import Path
 from typing import Dict, List
 
@@ -42,7 +43,7 @@ class P2PNode:
         if P2P_PRIVKEY_ENV:
             try:
                 self.signing_key = load_signing_key(P2P_PRIVKEY_ENV)
-                self.pubkey_b64 = self.signing_key.verify_key.encode().hex()
+                self.pubkey_b64 = base64.urlsafe_b64encode(self.signing_key.verify_key.encode()).decode().rstrip("=")
             except Exception:
                 self.signing_key = None
 

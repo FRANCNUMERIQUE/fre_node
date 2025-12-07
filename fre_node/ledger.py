@@ -92,6 +92,16 @@ class Ledger:
     def count_blocks(self):
         return len(self.chain)
 
+    def truncate(self, height: int):
+        """
+        Coupe la chaîne au height indiqué (conservé), rewrite chain.json
+        """
+        if height < 0:
+            self.chain = []
+        else:
+            self.chain = self.chain[: height + 1]
+        self._write_chain(self.chain)
+
     # =====================================
     # ADD BLOCK
     # =====================================
