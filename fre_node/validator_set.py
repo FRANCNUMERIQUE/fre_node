@@ -2,18 +2,18 @@ import json
 from pathlib import Path
 from typing import List, Dict
 
-from .config import VALIDATORS_FILE, NODE_NAME
+from .config import VALIDATORS_FILE, NODE_NAME, VALIDATORS_DEFAULT
 
 
 def load_validators() -> List[Dict]:
     """
     Charge la liste des validateurs depuis validators.json.
     Format attendu : [{"name": "...", "pubkey": "base64url", "stake": 1}, ...]
-    Fallback : validateur unique NODE_NAME sans pubkey (à renseigner).
+    Fallback : VALIDATORS_DEFAULT (config.py).
     """
     path = Path(VALIDATORS_FILE)
     if not path.exists():
-        return [{"name": NODE_NAME, "pubkey": None, "stake": 1}]
+        return VALIDATORS_DEFAULT
     try:
         data = json.loads(path.read_text())
         if isinstance(data, list):

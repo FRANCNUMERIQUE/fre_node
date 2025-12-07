@@ -51,6 +51,14 @@ VALIDATOR_PRIVATE_KEY = os.getenv("FRE_VALIDATOR_PRIVKEY", "")  # base64url ed25
 # VALIDATEURS (mPoS light)
 # ===========================
 VALIDATORS_FILE = os.path.join(DATA_DIR, "validators.json")
+# Liste statique par défaut (un seul validateur). Sera écrasée par validators.json si présent.
+VALIDATORS_DEFAULT = [
+    {
+        "name": os.getenv("FRE_VALIDATOR_NAME", "fre-node-01"),
+        "public_key": os.getenv("FRE_VALIDATOR_PUBKEY", ""),
+        "stake": 1
+    }
+]
 VALIDATOR_PRIVKEY_ENV = VALIDATOR_PRIVATE_KEY or os.getenv("FRE_VALIDATOR_PRIVKEY")
 
 # ===========================
