@@ -24,11 +24,12 @@ echo ""
 check_service() {
     SERVICE=$1
     echo -e "${YELLOW}[SERVICE] Vérification : $SERVICE${RESET}"
-    
-    if systemctl is-active --quiet $SERVICE; then
+
+    if systemctl is-active --quiet "$SERVICE" 2>/dev/null || sudo systemctl is-active --quiet "$SERVICE" 2>/dev/null; then
         echo -e " → ${GREEN}OK : Service actif${RESET}"
     else
-        echo -e " → ${RED}ERREUR : Service inactif${RESET}"
+        STATE=$(systemctl is-active "$SERVICE" 2>/dev/null || sudo systemctl is-active "$SERVICE" 2>/dev/null || echo "indéterminé")
+        echo -e " → ${RED}ERREUR : Service inactif (${STATE})${RESET}"
     fi
     echo ""
 }
@@ -116,12 +117,12 @@ echo ""
 
 echo -e "${YELLOW}[DASHBOARD] Test de disponibilité...${RESET}"
 
-DASH=$(curl -Is http://$IP:$DASHBOARD_PORT | head -n 1)
+DASH_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$IP:$DASHBOARD_PORT/)
 
-if [[ $DASH == *"200"* ]]; then
-    echo -e " → ${GREEN}OK : Dashboard accessible${RESET}"
+if [[ "$DASH_CODE" == "200" || "$DASH_CODE" == "301" || "$DASH_CODE" == "302" || "$DASH_CODE" == "307" || "$DASH_CODE" == "308" ]]; then
+    echo -e " → ${GREEN}OK : Dashboard accessible (code $DASH_CODE)${RESET}"
 else
-    echo -e " → ${RED}ERREUR : Dashboard inaccessible${RESET}"
+    echo -e " → ${RED}ERREUR : Dashboard inaccessible (code $DASH_CODE)${RESET}"
 fi
 echo ""
 
