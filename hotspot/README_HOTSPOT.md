@@ -20,6 +20,14 @@ sudo systemctl disable hostapd dnsmasq
   ```
   Puis `sudo systemctl restart dhcpcd` ou reboot.
 
+## 2bis) Désactiver wpa_supplicant sur wlan0
+Pour éviter que l’interface ne repasse en mode client :
+```
+sudo systemctl stop wpa_supplicant@wlan0.service
+sudo systemctl disable wpa_supplicant@wlan0.service
+sudo rfkill unblock all
+```
+
 ## 3) hostapd (point d’accès)
 Copier et adapter `hotspot/hostapd.conf.example` vers `/etc/hostapd/hostapd.conf`, puis définir dans `/etc/default/hostapd` :
 ```
