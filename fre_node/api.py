@@ -14,6 +14,8 @@ from pathlib import Path
 import json
 import os
 from typing import Optional
+import base64
+from nacl.signing import SigningKey
 
 import psutil
 import platform
@@ -265,6 +267,20 @@ def admin_validator_info(x_admin_token: str = Header(default="")):
         }
     }
     return info
+
+
+@app.get("/admin/validator/generate")
+def admin_validator_generate(x_admin_token: str = Header(default="")):
+    """
+    Génère une paire de clés Ed25519 côté nœud.
+    Retourne public_key / private_key en base64url.
+    """
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    key = SigningKey.generate()
+    pub_b64 = base64.urlsafe_b64encode(key.verify_key.encode()).decode().rstrip("=")
+    priv_b64 = base64.urlsafe_b64encode(key.encode()).decode().rstrip("=")
+    return {"public_key": pub_b64, "private_key": priv_b64}
 
 
 @app.post("/admin/wifi")

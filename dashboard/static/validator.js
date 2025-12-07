@@ -149,7 +149,9 @@
   loadProfileBtn.onclick = loadProfile;
   generateKeysBtn.onclick = async () => {
     valStatus.textContent = "Génération en cours...";
-    try {
+    const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+    const generateLocal = async () => {
       if (!window.crypto || !window.crypto.subtle) throw new Error("WebCrypto indisponible");
       const keyPair = await window.crypto.subtle.generateKey(
         { name: "Ed25519" },
@@ -158,10 +160,27 @@
       );
       const pub = await window.crypto.subtle.exportKey("raw", keyPair.publicKey);
       const priv = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
-      const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-      valPub.value = b64url(pub);
-      valPriv.value = b64url(priv);
-      valStatus.textContent = "Clés générées (local, non envoyées).";
+      return { pub: b64url(pub), priv: b64url(priv) };
+    };
+
+    const generateRemote = async () => {
+      const res = await fetch(`${apiBase}/admin/validator/generate`, { headers: headers() });
+      const data = await handleResponse(res);
+      if (!data.public_key || !data.private_key) throw new Error("Réponse invalide");
+      return { pub: data.public_key, priv: data.private_key };
+    };
+
+    try {
+      let keys;
+      try {
+        keys = await generateLocal();
+        valStatus.textContent = "Clés générées localement.";
+      } catch (e) {
+        keys = await generateRemote();
+        valStatus.textContent = "Clés générées côté nœud.";
+      }
+      valPub.value = keys.pub;
+      valPriv.value = keys.priv;
     } catch (e) {
       valStatus.textContent = "Erreur génération: " + e.message;
     }
