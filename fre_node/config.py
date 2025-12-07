@@ -28,6 +28,9 @@ BLOCK_INTERVAL = 5          # secondes
 MAX_TX_PER_BLOCK = 100
 INITIAL_BALANCE = 1000      # pour les nouveaux wallets
 
+# Rewards / fees
+BLOCK_REWARD = 0            # inflation optionnelle par bloc (0 = désactivé)
+
 # Mempool
 MEMPOOL_FILE = os.path.join(DATA_DIR, "mempool.json")
 MEMPOOL_TTL_SEC = 600       # expire après 10 minutes

@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 from .block import Block
-from .config import MAX_TX_PER_BLOCK, NODE_NAME
+from .config import MAX_TX_PER_BLOCK, NODE_NAME, BLOCK_REWARD
 from .state import get_global_state
 
 class Consensus:
@@ -36,12 +36,18 @@ class Consensus:
         txs = self.mempool.pop_transactions(MAX_TX_PER_BLOCK)
 
         applied_txs = []
+        total_fees = 0
 
         for tx in txs:
             ok = self.state.apply_transaction(tx)
             if ok:
                 applied_txs.append(tx)
+                total_fees += tx.get("fee", 0)
             # les transactions invalides sont ignorées, non rejouées
+
+        reward_total = total_fees + (BLOCK_REWARD if BLOCK_REWARD else 0)
+        if reward_total > 0:
+            self.state.credit(NODE_NAME, reward_total)
 
         state_root = self.state.compute_state_root()
 

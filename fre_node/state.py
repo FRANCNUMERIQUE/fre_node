@@ -61,6 +61,15 @@ class State:
             self.nonces[addr] = 0
             self._save()
 
+    def credit(self, addr: str, amount: int):
+        """Crédite un wallet (rewards/fees)."""
+        if amount <= 0:
+            return
+        if addr not in self.balances:
+            self.create_wallet_if_needed(addr)
+        self.balances[addr] += amount
+        self._save()
+
     # ============================
     # NONCE MANAGEMENT
     # ============================
