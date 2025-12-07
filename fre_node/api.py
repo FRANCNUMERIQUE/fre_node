@@ -266,6 +266,50 @@ def admin_validator_info(x_admin_token: str = Header(default="")):
     }
     return info
 
+
+@app.post("/admin/wifi")
+def admin_wifi(
+    payload: dict = Body(...),
+    x_admin_token: str = Header(default="")
+):
+    """
+    Configure le Wi‑Fi client (wpa_supplicant) puis bascule wlan0 en mode client.
+    Attention : peut couper le hotspot et l'accès actuel.
+    """
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    ssid = payload.get("ssid", "").strip()
+    password = payload.get("password", "").strip()
+    country = payload.get("country", "FR").strip() or "FR"
+
+    if not ssid or not password:
+        return JSONResponse({"error": "ssid and password required"}, status_code=400)
+
+    wpa_conf = f"""ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country={country}
+network={{
+    ssid="{ssid}"
+    psk="{password}"
+}}
+"""
+    WPA_PATH = "/etc/wpa_supplicant/wpa_supplicant.conf"
+    try:
+        # sauvegarde
+        subprocess.run(["sudo", "cp", WPA_PATH, WPA_PATH + ".bak"], check=False)
+        # écriture
+        subprocess.run(["sudo", "bash", "-c", f'cat > {WPA_PATH} <<\"EOF\"\n{wpa_conf}\nEOF'], check=True)
+        # bascule mode client : arrêter hostapd/dnsmasq, activer wpa_supplicant
+        subprocess.run(["sudo", "systemctl", "stop", "hostapd", "dnsmasq"], check=False)
+        subprocess.run(["sudo", "systemctl", "disable", "hostapd", "dnsmasq"], check=False)
+        subprocess.run(["sudo", "systemctl", "enable", "--now", "wpa_supplicant@wlan0.service"], check=False)
+        # relancer le réseau
+        subprocess.run(["sudo", "systemctl", "restart", "systemd-networkd"], check=False)
+        return {"status": "ok", "message": "Wi-Fi appliqué, wlan0 bascule en client"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 # ===============================
 #          LEGACY ROUTES
 # ===============================

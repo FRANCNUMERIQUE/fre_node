@@ -20,6 +20,7 @@
   const wifiPass = document.getElementById("wifiPass");
   const wifiStatus = document.getElementById("wifiStatus");
   const saveWifiBtn = document.getElementById("saveWifi");
+  const applyWifiBtn = document.getElementById("applyWifi");
   const tonAddr = document.getElementById("tonAddr");
   const tonStatus = document.getElementById("tonStatus");
   const saveTonBtn = document.getElementById("saveTon");
@@ -169,6 +170,25 @@
     localStorage.setItem("fre_wifi_ssid", wifiSsid.value.trim());
     localStorage.setItem("fre_wifi_pass", wifiPass.value);
     wifiStatus.textContent = "Wi‑Fi enregistré localement.";
+  };
+
+  applyWifiBtn.onclick = async () => {
+    wifiStatus.textContent = "Application en cours... (le hotspot peut s'arrêter)";
+    try {
+      const res = await fetch(`${apiBase}/admin/wifi`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({
+          ssid: wifiSsid.value.trim(),
+          password: wifiPass.value,
+          country: "FR"
+        })
+      });
+      const data = await handleResponse(res);
+      wifiStatus.textContent = data.message || "Wi‑Fi appliqué. Le nœud bascule en client.";
+    } catch (e) {
+      wifiStatus.textContent = "Erreur: " + e.message;
+    }
   };
 
   // Wallet TON (stockage local)
