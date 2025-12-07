@@ -139,3 +139,19 @@ def verify_signature(pubkey_hash: bytes, message: bytes, signature: str, pubkey:
         return hashlib.sha256(message).digest().startswith(pubkey_hash[:4])
     except Exception:
         return False
+
+# ===========================
+# SIGNATURE BRUTE ED25519 (bloc)
+# ===========================
+
+def verify_signature_raw(pubkey_b64: str, message: bytes, signature_b64: str) -> bool:
+    try:
+        vk = VerifyKey(b64url_decode(pubkey_b64))
+        sig = b64url_decode(signature_b64)
+        vk.verify(message, sig)
+        return True
+    except Exception:
+        return False
+
+def load_signing_key(privkey_b64: str) -> SigningKey:
+    return SigningKey(b64url_decode(privkey_b64))

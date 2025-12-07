@@ -44,6 +44,12 @@ VALIDATOR_PUBLIC_KEY = None   # sera rempli au lancement
 VALIDATOR_PRIVATE_KEY = None  # idem
 
 # ===========================
+# VALIDATEURS (mPoS light)
+# ===========================
+VALIDATORS_FILE = os.path.join(DATA_DIR, "validators.json")
+VALIDATOR_PRIVKEY_ENV = os.getenv("FRE_VALIDATOR_PRIVKEY")
+
+# ===========================
 # TRANSACTIONS (FORMAT STRICT)
 # ===========================
 TX_VERSION = "tx_v1"

@@ -2,6 +2,8 @@ import json
 import os
 from .config import CHAIN_FILE
 from .block import Block
+from .validators import load_validators, select_producer, get_pubkey
+from .utils import verify_signature_raw
 
 
 class Ledger:
@@ -14,6 +16,7 @@ class Ledger:
             print("[LEDGER] Creating chain.json")
             self._write_chain([])
         self.chain = self._read_chain()
+        self.validators = load_validators()
         self._validate_chain_on_load()
 
     # =====================================
@@ -57,6 +60,7 @@ class Ledger:
             "validator": validator,
             "state_root": state_root,
             "merkle_root": merkle_root,
+            "block_signature": blk.get("block_signature"),
         }
 
         try:
@@ -132,6 +136,7 @@ class Ledger:
                 validator=blk["validator"],
                 state_root=blk.get("state_root", ""),
                 merkle_root=blk.get("merkle_root"),
+                block_signature=blk.get("block_signature"),
             )
         except Exception:
             print("[LEDGER] Malformed block")
@@ -143,6 +148,20 @@ class Ledger:
 
         if blk.get("hash") != block_obj.hash:
             print("[LEDGER] Invalid hash")
+            return False
+
+        # producer check + signature
+        expected_producer = select_producer(blk["index"], self.validators)
+        if blk.get("validator") != expected_producer:
+            print("[LEDGER] Invalid producer")
+            return False
+
+        pubkey = get_pubkey(self.validators, blk.get("validator"))
+        if not pubkey or not blk.get("block_signature"):
+            print("[LEDGER] Missing pubkey or signature")
+            return False
+        if not verify_signature_raw(pubkey, block_obj.hash.encode(), blk["block_signature"]):
+            print("[LEDGER] Invalid block signature")
             return False
 
         return True
@@ -157,6 +176,7 @@ class Ledger:
                 validator=blk["validator"],
                 state_root=blk.get("state_root", ""),
                 merkle_root=blk.get("merkle_root"),
+                block_signature=blk.get("block_signature"),
             )
 
             if blk.get("merkle_root") and blk.get("merkle_root") != block_obj.merkle_root:
@@ -167,3 +187,13 @@ class Ledger:
 
             if i > 0 and blk.get("prev_hash") != self.chain[i - 1]["hash"]:
                 raise ValueError(f"Block #{i} invalid chain link")
+
+            expected_producer = select_producer(blk["index"], self.validators)
+            if blk.get("validator") != expected_producer:
+                raise ValueError(f"Block #{i} invalid producer")
+
+            pubkey = get_pubkey(self.validators, blk.get("validator"))
+            if not pubkey or not blk.get("block_signature"):
+                raise ValueError(f"Block #{i} missing pubkey or signature")
+            if not verify_signature_raw(pubkey, block_obj.hash.encode(), blk["block_signature"]):
+                raise ValueError(f"Block #{i} invalid block signature")

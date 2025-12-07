@@ -5,7 +5,7 @@ from .utils import compute_tx_id
 
 
 class Block:
-    def __init__(self, index, timestamp, txs, prev_hash, validator, state_root, merkle_root=None):
+    def __init__(self, index, timestamp, txs, prev_hash, validator, state_root, merkle_root=None, block_signature=None):
         self.index = index
         self.timestamp = timestamp
         self.txs = txs
@@ -13,6 +13,7 @@ class Block:
         self.validator = validator
         self.state_root = state_root
         self.merkle_root = merkle_root or self.compute_merkle_root(txs)
+        self.block_signature = block_signature
         self.hash = self.compute_hash()
 
     @staticmethod
@@ -58,5 +59,6 @@ class Block:
             "validator": self.validator,
             "state_root": self.state_root,
             "merkle_root": self.merkle_root,
+            "block_signature": self.block_signature,
             "hash": self.hash
         }
