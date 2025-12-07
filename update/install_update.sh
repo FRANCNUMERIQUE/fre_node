@@ -47,7 +47,9 @@ DAEMON_OPTS=""
 EOF
 
 # dnsmasq config
-if [ ! -f /etc/dnsmasq.conf ] && [ -f "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" ]; then
+if [ -f "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" ]; then
+  # sauvegarde l'existant si présent
+  [ -f /etc/dnsmasq.conf ] && sudo cp /etc/dnsmasq.conf /etc/dnsmasq.conf.bak 2>/dev/null || true
   sudo cp "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" /etc/dnsmasq.conf
 fi
 
