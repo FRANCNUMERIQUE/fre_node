@@ -25,6 +25,10 @@ echo "[INSTALL] Installation hostapd/dnsmasq/avahi..."
 sudo apt-get update -y
 sudo apt-get install -y hostapd dnsmasq avahi-daemon
 
+# Dé-masquer hostapd/dnsmasq si nécessaire
+sudo systemctl unmask hostapd 2>/dev/null || true
+sudo systemctl unmask dnsmasq 2>/dev/null || true
+
 # Config hostapd (création si absente)
 if [ ! -f /etc/hostapd/hostapd.conf ] && [ -f "$SCRIPT_DIR/../hotspot/hostapd.conf.example" ]; then
   sudo cp "$SCRIPT_DIR/../hotspot/hostapd.conf.example" /etc/hostapd/hostapd.conf
