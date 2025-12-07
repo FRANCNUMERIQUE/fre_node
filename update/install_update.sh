@@ -103,6 +103,11 @@ sudo ip link set wlan0 up 2>/dev/null || true
 # Stop any dhclient on wlan0
 pgrep -fa "dhclient.*wlan0" && sudo pkill -f "dhclient.*wlan0" || true
 
+# Flush firewall (iptables/nft) to ensure DHCP/HTTP are reachable on wlan0
+sudo iptables -F
+sudo iptables -t nat -F
+sudo nft flush ruleset 2>/dev/null || true
+
 # Reload systemd
 sudo systemctl daemon-reload
 
