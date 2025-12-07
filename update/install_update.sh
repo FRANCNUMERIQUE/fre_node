@@ -33,9 +33,11 @@ sudo systemctl unmask dnsmasq 2>/dev/null || true
 if [ ! -f /etc/hostapd/hostapd.conf ] && [ -f "$SCRIPT_DIR/../hotspot/hostapd.conf.example" ]; then
   sudo cp "$SCRIPT_DIR/../hotspot/hostapd.conf.example" /etc/hostapd/hostapd.conf
 fi
-if [ -f /etc/default/hostapd ]; then
-  sudo sed -i 's|^#*DAEMON_CONF=.*|DAEMON_CONF="/etc/hostapd/hostapd.conf"|' /etc/default/hostapd
-fi
+# Assure une configuration par défaut propre (évite les variables vides)
+cat <<'EOF' | sudo tee /etc/default/hostapd >/dev/null
+# FRE Node hotspot defaults
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+EOF
 
 # Config dnsmasq (création si absente)
 if [ ! -f /etc/dnsmasq.conf ] && [ -f "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" ]; then
