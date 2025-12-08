@@ -123,6 +123,7 @@
     if (tokenInput) tokenInput.value = stored;
     refreshStatus();
     loadProfile();
+    fetchWifiSta();
   };
 
   // Status/services
@@ -273,6 +274,17 @@
     if (wifiPass) localStorage.setItem("fre_wifi_pass", wifiPass.value);
     if (wifiStatus) wifiStatus.textContent = "Wi-Fi enregistre localement.";
   };
+
+  const fetchWifiSta = async () => {
+    try {
+      const data = await handleResponse(await fetch(${apiBase}/admin/wifi_sta, { headers: headers() }));
+      if (data && data.ssid && wifiSsid) wifiSsid.value = data.ssid;
+      if (data && data.password && wifiPass) wifiPass.value = data.password;
+    } catch (e) {
+      // silencieux si non configure
+    }
+  };
+
   const applyWifi = async () => {
     if (!wifiStatus) return;
     wifiStatus.textContent = "Application en cours... (le hotspot peut s'arreter)";
@@ -334,6 +346,7 @@
     hideModal();
     refreshStatus();
     loadProfile();
+    fetchWifiSta();
   };
 
   if (clearTokenBtn) clearTokenBtn.onclick = () => {
@@ -354,6 +367,7 @@
     hideModal();
     refreshStatus();
     loadProfile();
+    fetchWifiSta();
   };
 
   if (tokenModalCancel) tokenModalCancel.onclick = hideModal;

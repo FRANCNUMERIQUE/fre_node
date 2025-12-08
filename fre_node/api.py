@@ -351,6 +351,36 @@ network={{
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+def _read_wpa_sta_conf(path: str):
+    """Retourne un dict ssid/psk/country si le fichier existe."""
+    if not Path(path).exists():
+        return {}
+    ssid = ""
+    psk = ""
+    country = ""
+    try:
+        for line in Path(path).read_text().splitlines():
+            line = line.strip()
+            if line.startswith("ssid="):
+                ssid = line.split("=", 1)[1].strip().strip('"')
+            elif line.startswith("psk="):
+                psk = line.split("=", 1)[1].strip().strip('"')
+            elif line.startswith("country="):
+                country = line.split("=", 1)[1].strip()
+    except Exception:
+        return {}
+    return {"ssid": ssid, "password": psk, "country": country}
+
+
+@app.get("/admin/wifi_sta")
+def admin_wifi_sta_get(x_admin_token: str = Header(default="")):
+    """Lit la configuration STA (wlan0_sta)."""
+    if config.ADMIN_TOKEN and x_admin_token != config.ADMIN_TOKEN:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    WPA_STA_PATH = "/etc/wpa_supplicant/wpa_supplicant-wlan0_sta.conf"
+    return _read_wpa_sta_conf(WPA_STA_PATH)
+
+
 @app.post("/admin/wifi_sta")
 def admin_wifi_sta(
     payload: dict = Body(...),
@@ -390,8 +420,8 @@ network={{
             "dhclient-wlan0_sta.service",
             "fre_nat.service",
         ]:
-            subprocess.run(["sudo", "systemctl", "restart", svc], check=False)
-        return {"status": "ok", "message": "Wi-Fi STA appliqué (AP+STA)."}
+            subprocess.run(["sudo", "systemctl", "enable", "--now", svc], check=False)
+        return {"status": "ok", "message": "Wi-Fi STA appliqué (AP+STA). Relance automatique au reboot."}
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
