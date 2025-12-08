@@ -1,48 +1,49 @@
-(() => {
+﻿(() => {
   const $ = (id) => document.getElementById(id);
 
   // DOM
-  const tokenInput = token;
-  const saveTokenBtn = saveToken;
-  const clearTokenBtn = clearToken;
-  const generateTokenBtn = generateAdminToken;
-  const tokenModal = tokenModal;
-  const tokenModalInfo = tokenModalInfo;
-  const tokenModalInput = tokenModalInput;
-  const tokenModalStatus = tokenModalStatus;
-  const tokenModalSave = tokenModalSave;
-  const tokenModalCancel = tokenModalCancel;
+  const tokenInput = $("token");
+  const saveTokenBtn = $("saveToken");
+  const clearTokenBtn = $("clearToken");
+  const generateTokenBtn = $("generateAdminToken");
+  const tokenModal = $("tokenModal");
+  const tokenModalInfo = $("tokenModalInfo");
+  const tokenModalInput = $("tokenModalInput");
+  const tokenModalStatus = $("tokenModalStatus");
+  const tokenModalSave = $("tokenModalSave");
+  const tokenModalCancel = $("tokenModalCancel");
 
-  const valName = valName;
-  const valPub = valPub;
-  const valPriv = valPriv;
-  const valStake = valStake;
-  const valStatus = valStatus;
+  const valName = $("valName");
+  const valPub = $("valPub");
+  const valPriv = $("valPriv");
+  const valStake = $("valStake");
+  const valStatus = $("valStatus");
+  const togglePrivBtn = $("togglePriv");
 
-  const generateKeysBtn = generateKeys;
-  const regenerateKeysBtn = regenerateKeys;
-  const saveValidatorBtn = saveValidator;
+  const generateKeysBtn = $("generateKeys");
+  const regenerateKeysBtn = $("regenerateKeys");
+  const saveValidatorBtn = $("saveValidator");
 
-  const refreshStatusBtn = refreshStatus;
-  const quickStatus = quickStatus;
-  const restartNodeBtn = restartNode;
-  const restartDashBtn = restartDash;
-  const runUpdateBtn = runUpdate;
-  const actionStatus = actionStatus;
-  const logOutput = logOutput;
+  const refreshStatusBtn = $("refreshStatus");
+  const quickStatus = $("quickStatus");
+  const restartNodeBtn = $("restartNode");
+  const restartDashBtn = $("restartDash");
+  const runUpdateBtn = $("runUpdate");
+  const actionStatus = $("actionStatus");
+  const logOutput = $("logOutput");
 
-  const wifiSsid = wifiSsid;
-  const wifiPass = wifiPass;
-  const wifiStatus = wifiStatus;
-  const saveWifiBtn = saveWifi;
-  const applyWifiBtn = applyWifi;
-  const applyWifiStaBtn = applyWifiSta;
+  const wifiSsid = $("wifiSsid");
+  const wifiPass = $("wifiPass");
+  const wifiStatus = $("wifiStatus");
+  const saveWifiBtn = $("saveWifi");
+  const applyWifiBtn = $("applyWifi");
+  const applyWifiStaBtn = $("applyWifiSta");
 
-  const tonAddr = tonAddr;
-  const tonStatus = tonStatus;
-  const saveTonBtn = saveTon;
+  const tonAddr = $("tonAddr");
+  const tonStatus = $("tonStatus");
+  const saveTonBtn = $("saveTon");
 
-  const rewardsBox = rewardsBox;
+  const rewardsBox = $("rewardsBox");
 
   // Token helpers
   const loadToken = () => localStorage.getItem("fre_validator_token") || "";
@@ -84,7 +85,7 @@
 
   const fetchTokenStatus = async () => {
     try {
-      const data = await handleResponse(await fetch(${apiBase}/admin/token/status));
+      const data = await handleResponse(await fetch(`${apiBase}/admin/token/status`));
       return !!data.set;
     } catch (e) {
       return false;
@@ -94,7 +95,7 @@
   const generateAdminToken = async () => {
     if (tokenModalStatus) tokenModalStatus.textContent = "Generation en cours...";
     try {
-      const data = await handleResponse(await fetch(${apiBase}/admin/token/generate, { method: "POST" }));
+      const data = await handleResponse(await fetch(`${apiBase}/admin/token/generate`, { method: "POST" }));
       const tok = data.token || "";
       if (!tok) throw new Error("Token absent dans la reponse");
       saveToken(tok);
@@ -104,6 +105,7 @@
       hideModal();
       refreshStatus();
       loadProfile();
+      fetchWifiSta();
     } catch (e) {
       if (tokenModalStatus) tokenModalStatus.textContent = "Erreur: " + e.message;
     }
@@ -131,7 +133,7 @@
     if (!quickStatus) return;
     quickStatus.textContent = "Chargement...";
     try {
-      const res = await fetch(${apiBase}/admin/status, { headers: headers() });
+      const res = await fetch(`${apiBase}/admin/status`, { headers: headers() });
       const data = await handleResponse(res);
       quickStatus.textContent = JSON.stringify(data, null, 2);
     } catch (e) {
@@ -142,9 +144,9 @@
   // Restart services / update
   const restartService = async (service) => {
     if (!actionStatus) return;
-    actionStatus.textContent = Redemarrage ...;
+    actionStatus.textContent = `Redemarrage ${service}...`;
     try {
-      const res = await fetch(${apiBase}/admin/service/restart, {
+      const res = await fetch(`${apiBase}/admin/service/restart`, {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({ service })
@@ -160,7 +162,7 @@
     if (!logOutput) return;
     logOutput.textContent = "Mise a jour en cours...";
     try {
-      const res = await fetch(${apiBase}/admin/update, { method: "POST", headers: headers() });
+      const res = await fetch(`${apiBase}/admin/update`, { method: "POST", headers: headers() });
       const data = await handleResponse(res);
       logOutput.textContent = JSON.stringify(data, null, 2);
     } catch (e) {
@@ -173,7 +175,7 @@
     if (!valStatus) return;
     valStatus.textContent = "Sauvegarde...";
     try {
-      const res = await fetch(${apiBase}/admin/validator, {
+      const res = await fetch(`${apiBase}/admin/validator`, {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({
@@ -196,7 +198,7 @@
     if (!valStatus) return;
     valStatus.textContent = "Chargement...";
     try {
-      const res = await fetch(${apiBase}/admin/validator/info, { headers: headers() });
+      const res = await fetch(`${apiBase}/admin/validator/info`, { headers: headers() });
       const data = await handleResponse(res);
       if (data.validator) {
         if (valName) valName.value = data.validator.name || "";
@@ -233,7 +235,7 @@
     };
 
     const generateRemote = async () => {
-      const res = await fetch(${apiBase}/admin/validator/generate, { headers: headers() });
+      const res = await fetch(`${apiBase}/admin/validator/generate`, { headers: headers() });
       const data = await handleResponse(res);
       if (!data.public_key || !data.private_key) throw new Error("Reponse invalide");
       return { pub: data.public_key, priv: data.private_key };
@@ -277,7 +279,7 @@
 
   const fetchWifiSta = async () => {
     try {
-      const data = await handleResponse(await fetch(${apiBase}/admin/wifi_sta, { headers: headers() }));
+      const data = await handleResponse(await fetch(`${apiBase}/admin/wifi_sta`, { headers: headers() }));
       if (data && data.ssid && wifiSsid) wifiSsid.value = data.ssid;
       if (data && data.password && wifiPass) wifiPass.value = data.password;
     } catch (e) {
@@ -289,7 +291,7 @@
     if (!wifiStatus) return;
     wifiStatus.textContent = "Application en cours... (le hotspot peut s'arreter)";
     try {
-      const res = await fetch(${apiBase}/admin/wifi, {
+      const res = await fetch(`${apiBase}/admin/wifi`, {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({
@@ -309,7 +311,7 @@
     if (!wifiStatus) return;
     wifiStatus.textContent = "Application AP+STA en cours (hotspot conserve)...";
     try {
-      const res = await fetch(${apiBase}/admin/wifi_sta, {
+      const res = await fetch(`${apiBase}/admin/wifi_sta`, {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({
@@ -319,7 +321,7 @@
         })
       });
       const data = await handleResponse(res);
-      wifiStatus.textContent = data.message || "Wi-Fi STA appliqu� (AP+STA).";
+      wifiStatus.textContent = data.message || "Wi-Fi STA appliqué (AP+STA).";
     } catch (e) {
       wifiStatus.textContent = "Erreur: " + e.message;
     }
@@ -381,6 +383,12 @@
   if (saveValidatorBtn) saveValidatorBtn.onclick = saveValidator;
   if (generateKeysBtn) generateKeysBtn.onclick = generateKeys;
   if (regenerateKeysBtn) regenerateKeysBtn.onclick = regenerateKeys;
+  if (togglePrivBtn && valPriv) {
+    togglePrivBtn.onclick = () => {
+      const isPwd = valPriv.getAttribute("type") === "password";
+      valPriv.setAttribute("type", isPwd ? "text" : "password");
+    };
+  }
 
   if (saveWifiBtn) saveWifiBtn.onclick = saveWifiLocal;
   if (applyWifiBtn) applyWifiBtn.onclick = applyWifi;
