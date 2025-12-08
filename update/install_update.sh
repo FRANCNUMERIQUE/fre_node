@@ -154,6 +154,9 @@ RestartSec=3
 ExecStartPre=/usr/bin/env bash -c 'ip link show wlan0 >/dev/null 2>&1 && ip addr show wlan0 | grep -q 192.168.50 || exit 1'
 EOF
 
+# Reload units pour prendre en compte les drop-ins
+sudo systemctl daemon-reload
+
 # Restart services
 sudo systemctl restart fre_node.service
 sudo systemctl restart fre_dashboard.service
