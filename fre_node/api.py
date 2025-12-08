@@ -350,6 +350,51 @@ network={{
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
+
+@app.post("/admin/wifi_sta")
+def admin_wifi_sta(
+    payload: dict = Body(...),
+    x_admin_token: str = Header(default="")
+):
+    """
+    Configure le Wi-Fi domestique en mode AP+STA via l'interface virtuelle wlan0_sta.
+    Écrit la conf wpa_supplicant-wlan0_sta.conf puis redémarre les services STA.
+    Le hotspot hostapd/dnsmasq reste actif sur wlan0.
+    """
+    if config.ADMIN_TOKEN and x_admin_token != config.ADMIN_TOKEN:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    ssid = payload.get("ssid", "").strip()
+    password = payload.get("password", "").strip()
+    country = payload.get("country", "FR").strip() or "FR"
+
+    if not ssid or not password:
+        return JSONResponse({"error": "ssid and password required"}, status_code=400)
+
+    wpa_conf = f"""ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country={country}
+network={{
+    ssid="{ssid}"
+    psk="{password}"
+}}
+"""
+    WPA_STA_PATH = "/etc/wpa_supplicant/wpa_supplicant-wlan0_sta.conf"
+    try:
+        Path("/etc/wpa_supplicant").mkdir(parents=True, exist_ok=True)
+        Path(WPA_STA_PATH).write_text(wpa_conf)
+        # redémarrage des services STA (sans couper le hotspot)
+        for svc in [
+            "wlan0-sta.service",
+            "wpa_supplicant@wlan0_sta.service",
+            "dhclient-wlan0_sta.service",
+            "fre_nat.service",
+        ]:
+            subprocess.run(["sudo", "systemctl", "restart", svc], check=False)
+        return {"status": "ok", "message": "Wi-Fi STA appliqué (AP+STA)."}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 # ===============================
 #          LEGACY ROUTES
 # ===============================
