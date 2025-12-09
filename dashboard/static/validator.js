@@ -85,7 +85,12 @@
 
   const fetchTokenStatus = async () => {
     try {
-      const data = await handleResponse(await fetch(`${apiBase}/admin/token/status`));
+      const data = await handleResponse(await fetch(`${apiBase}/admin/token/status?include_token=1`));
+      if (data.token) {
+        saveToken(data.token);
+        if (tokenInput) tokenInput.value = data.token;
+        if (tokenModalInput) tokenModalInput.value = data.token;
+      }
       return !!data.set;
     } catch (e) {
       return false;
