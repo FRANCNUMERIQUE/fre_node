@@ -6,12 +6,14 @@
   const saveTokenBtn = $("saveToken");
   const clearTokenBtn = $("clearToken");
   const generateTokenBtn = $("generateAdminToken");
+  const copyTokenBtn = $("copyToken");
   const tokenModal = $("tokenModal");
   const tokenModalInfo = $("tokenModalInfo");
   const tokenModalInput = $("tokenModalInput");
   const tokenModalStatus = $("tokenModalStatus");
   const tokenModalSave = $("tokenModalSave");
   const tokenModalCancel = $("tokenModalCancel");
+  const tokenStatus = $("tokenStatus");
 
   const valName = $("valName");
   const valPub = $("valPub");
@@ -107,12 +109,20 @@
       if (tokenInput) tokenInput.value = tok;
       if (tokenModalInput) tokenModalInput.value = tok;
       if (tokenModalStatus) tokenModalStatus.textContent = "Token genere et enregistre localement.";
+      if (tokenStatus) tokenStatus.textContent = "Token genere et pre-rempli.";
       hideModal();
       refreshStatus();
       loadProfile();
       fetchWifiSta();
     } catch (e) {
-      if (tokenModalStatus) tokenModalStatus.textContent = "Erreur: " + e.message;
+      // Si le token existe déjà, on le récupère et on le pré-remplit
+      if (String(e.message).toLowerCase().includes("already set")) {
+        await fetchTokenStatus();
+        if (tokenModalStatus) tokenModalStatus.textContent = "Token deja present (pre-rempli).";
+        hideModal();
+      } else {
+        if (tokenModalStatus) tokenModalStatus.textContent = "Erreur: " + e.message;
+      }
     }
   };
 
@@ -350,6 +360,7 @@
     }
     saveToken(t);
     if (actionStatus) actionStatus.textContent = "Token enregistre.";
+    if (tokenStatus) tokenStatus.textContent = "Token enregistre localement.";
     hideModal();
     refreshStatus();
     loadProfile();
@@ -371,6 +382,7 @@
     saveToken(t);
     if (tokenInput) tokenInput.value = t;
     if (tokenModalStatus) tokenModalStatus.textContent = "Token enregistre localement.";
+    if (tokenStatus) tokenStatus.textContent = "Token enregistre localement.";
     hideModal();
     refreshStatus();
     loadProfile();
@@ -379,6 +391,19 @@
 
   if (tokenModalCancel) tokenModalCancel.onclick = hideModal;
   if (generateTokenBtn) generateTokenBtn.onclick = generateAdminToken;
+  if (copyTokenBtn) copyTokenBtn.onclick = async () => {
+    const t = tokenInput?.value || "";
+    if (!t) {
+      if (tokenStatus) tokenStatus.textContent = "Rien a copier (token vide).";
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(t);
+      if (tokenStatus) tokenStatus.textContent = "Token copie dans le presse-papiers.";
+    } catch (e) {
+      if (tokenStatus) tokenStatus.textContent = "Impossible de copier: " + e.message;
+    }
+  };
 
   if (refreshStatusBtn) refreshStatusBtn.onclick = refreshStatus;
   if (restartNodeBtn) restartNodeBtn.onclick = () => restartService("fre_node");

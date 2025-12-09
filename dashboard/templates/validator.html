@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -30,11 +30,15 @@
     <!-- Token admin -->
     <div class="card">
         <label>Token administrateur</label>
-        <input id="token" type="text" placeholder="Coller le token admin (ou utiliser le popup de generation)">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="token" type="text" placeholder="Coller le token admin (ou utiliser le popup de generation)" style="flex:1;">
+          <button class="secondary" id="copyToken">Copier</button>
+        </div>
         <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
             <button id="saveToken">Enregistrer</button>
             <button class="secondary" id="clearToken">Effacer</button>
         </div>
+        <div class="status" id="tokenStatus"></div>
     </div>
 
     <div class="grid">
@@ -44,9 +48,10 @@
             <input id="valName" type="text" placeholder="fre-node-01">
             <label>Clee publique (base64url)</label>
             <textarea id="valPub" rows="2" placeholder="clee publique"></textarea>
-            <label>Clee privee (base64url)</label>`n            <div style="display:flex; gap:8px; align-items:center;">
-            <input id="valPriv" type="password" placeholder="clee privee" style="flex:1;">
-              <button class="secondary" id="togglePriv">???</button>
+            <label>Clee privee (base64url)</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input id="valPriv" type="password" placeholder="clee privee" style="flex:1;">
+              <button class="secondary" id="togglePriv">👁️</button>
             </div>
             <label>Stake</label>
             <input id="valStake" type="number" value="1" min="1">
