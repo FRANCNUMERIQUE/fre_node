@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from .block import Block
 from .config import MAX_TX_PER_BLOCK, NODE_NAME, BLOCK_REWARD, VALIDATOR_PRIVKEY_ENV, ANCHOR_FREQUENCY_BLOCKS, SNAPSHOT_INTERVAL, VALIDATOR
@@ -69,7 +70,7 @@ class Consensus:
 
         new_block = Block(
             index=height,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=int(time.time()),
             txs=applied_txs,
             prev_hash=prev_hash,
             validator=producer_name,

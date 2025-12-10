@@ -3,7 +3,7 @@ import os
 from .config import CHAIN_FILE
 from .block import Block
 from .validator_set import load_validators, select_producer, get_pubkey
-from .utils import verify_signature_raw
+from .utils import verify_signature_raw, compute_tx_id
 
 
 class Ledger:
@@ -152,6 +152,12 @@ class Ledger:
             print("[LEDGER] Malformed block")
             return False
 
+        # Dédoublonnage TX dans le bloc
+        tx_ids = [compute_tx_id(tx) for tx in blk.get("txs", [])]
+        if len(tx_ids) != len(set(tx_ids)):
+            print("[LEDGER] Duplicate transactions in block")
+            return False
+
         if blk.get("merkle_root") and blk.get("merkle_root") != block_obj.merkle_root:
             print("[LEDGER] Invalid merkle_root")
             return False
@@ -189,6 +195,9 @@ class Ledger:
                 merkle_root=blk.get("merkle_root"),
                 block_signature=blk.get("block_signature"),
             )
+            tx_ids = [compute_tx_id(tx) for tx in blk.get("txs", [])]
+            if len(tx_ids) != len(set(tx_ids)):
+                raise ValueError(f"Block #{i} contains duplicate tx")
 
             if blk.get("merkle_root") and blk.get("merkle_root") != block_obj.merkle_root:
                 raise ValueError(f"Block #{i} invalid merkle_root")
