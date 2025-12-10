@@ -52,13 +52,24 @@ def total_stake(validators: List[Dict]) -> int:
     return sum(max(1, int(v.get("stake", 1))) for v in validators)
 
 
-def select_producer(height: int, validators: List[Dict]) -> str:
+def select_producer(height: int, validators: List[Dict], weighted: bool = True) -> str:
     """
-    Round-robin simple (ordre de la liste).
+    Sélection du producteur :
+    - weighted=True : round-robin pondéré par le stake (chaque validateur répété stake fois)
+    - weighted=False : round-robin simple (ordre de la liste)
     """
     if not validators:
         return NODE_NAME
-    return validators[height % len(validators)]["name"]
+    if not weighted:
+        return validators[height % len(validators)]["name"]
+
+    expanded = []
+    for v in validators:
+        stake = max(1, int(v.get("stake", 1)))
+        expanded.extend([v["name"]] * stake)
+    if not expanded:
+        return NODE_NAME
+    return expanded[height % len(expanded)]
 
 
 def get_pubkey(validators: List[Dict], name: str):

@@ -168,7 +168,7 @@ class Ledger:
 
         # producer check + signature (skip genesis)
         if blk.get("index", 0) > 0:
-            expected_producer = select_producer(blk["index"], self.validators)
+            expected_producer = select_producer(blk["index"], self.validators, weighted=True)
             if blk.get("validator") != expected_producer:
                 print("[LEDGER] Invalid producer")
                 return False
@@ -209,7 +209,7 @@ class Ledger:
                 raise ValueError(f"Block #{i} invalid chain link")
 
             if blk.get("index", 0) > 0:
-                expected_producer = select_producer(blk["index"], self.validators)
+                expected_producer = select_producer(blk["index"], self.validators, weighted=True)
                 if blk.get("validator") != expected_producer:
                     raise ValueError(f"Block #{i} invalid producer")
 

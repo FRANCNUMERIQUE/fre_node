@@ -116,7 +116,11 @@ def v1_address(addr: str):
 
 @app.get("/v1/validators")
 def v1_validators():
-    return validators_list
+    expanded = []
+    for v in validators_list:
+        stake = max(1, int(v.get("stake", 1)))
+        expanded.extend([v.get("name", "")] * stake)
+    return {"validators": validators_list, "weighted_order": expanded}
 
 
 @app.get("/v1/anchor/status")

@@ -64,7 +64,7 @@ class Consensus:
         state_root = self.state.compute_state_root()
 
         height = prev_block["index"] + 1 if prev_block else 0
-        expected_producer = select_producer(height, self.validators)
+        expected_producer = select_producer(height, self.validators, weighted=True)
         if expected_producer != producer_name:
             return None  # ce node n'est pas producteur pour ce slot
 
