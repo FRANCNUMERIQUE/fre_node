@@ -113,6 +113,25 @@ class Mempool:
         self._purge_expired()
         return len(self.transactions)
 
+    def stats(self) -> dict:
+        """Retourne des stats basiques sur la mempool."""
+        self._purge_expired()
+        count = len(self.transactions)
+        ts_list = [e.get("received_at", 0) for e in self.transactions]
+        fees = [e.get("tx", {}).get("fee", 0) for e in self.transactions if isinstance(e.get("tx", {}).get("fee", 0), (int, float))]
+        return {
+            "count": count,
+            "max_size": MEMPOOL_MAX_SIZE,
+            "ttl_sec": MEMPOOL_TTL_SEC,
+            "oldest_ts": min(ts_list) if ts_list else None,
+            "newest_ts": max(ts_list) if ts_list else None,
+            "fee": {
+                "max": max(fees) if fees else 0,
+                "min": min(fees) if fees else 0,
+                "avg": (sum(fees) / len(fees)) if fees else 0,
+            },
+        }
+
     def clear(self):
         self.transactions = []
         self.tx_index = set()

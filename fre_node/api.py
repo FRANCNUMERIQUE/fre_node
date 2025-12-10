@@ -128,6 +128,11 @@ def v1_anchor_status():
 def v1_mempool():
     return mempool.list_transactions()
 
+
+@app.get("/v1/mempool/stats")
+def v1_mempool_stats():
+    return mempool.stats()
+
 # ===============================
 #          ADMIN (LOCAL)
 # ===============================
