@@ -473,7 +473,13 @@ def mempool_content():
 @app.get("/health")
 def health():
     latest = ledger.get_latest_block() or {}
-    return {"status": "ok", "height": latest.get("index", 0), "hash": latest.get("hash", ""), "mempool": mempool.count()}
+    return {
+        "status": "ok",
+        "height": latest.get("index", 0),
+        "hash": latest.get("hash", ""),
+        "mempool": mempool.count(),
+        "validators": len(validators_list),
+    }
 
 @app.get("/metrics")
 def metrics():
@@ -482,7 +488,10 @@ def metrics():
         "node": NODE_NAME,
         "height": latest.get("index", 0),
         "latest_hash": latest.get("hash", ""),
-        "mempool": mempool.count(),
+        "mempool": {
+            "count": mempool.count(),
+        },
+        "validators": len(validators_list),
         "system": {
             "cpu_percent": psutil.cpu_percent(),
             "ram_percent": psutil.virtual_memory().percent,
