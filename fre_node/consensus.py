@@ -74,7 +74,9 @@ class Consensus:
             txs=applied_txs,
             prev_hash=prev_hash,
             validator=producer_name,
-            state_root=state_root
+            state_root=state_root,
+            total_fees=total_fees,
+            block_reward=(BLOCK_REWARD if BLOCK_REWARD else 0),
         )
 
         # Signature du bloc par le producteur

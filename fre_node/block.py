@@ -5,13 +5,27 @@ from .utils import compute_tx_id
 
 
 class Block:
-    def __init__(self, index, timestamp, txs, prev_hash, validator, state_root, merkle_root=None, block_signature=None):
+    def __init__(
+        self,
+        index,
+        timestamp,
+        txs,
+        prev_hash,
+        validator,
+        state_root,
+        merkle_root=None,
+        block_signature=None,
+        total_fees: int = 0,
+        block_reward: int = 0,
+    ):
         self.index = index
         self.timestamp = timestamp
         self.txs = txs
         self.prev_hash = prev_hash
         self.validator = validator
         self.state_root = state_root
+        self.total_fees = total_fees
+        self.block_reward = block_reward
         self.merkle_root = merkle_root or self.compute_merkle_root(txs)
         self.block_signature = block_signature
         self.hash = self.compute_hash()
@@ -46,7 +60,9 @@ class Block:
             "merkle_root": self.merkle_root,
             "timestamp": self.timestamp,
             "validator": self.validator,
-            "state_root": self.state_root
+            "state_root": self.state_root,
+            "total_fees": self.total_fees,
+            "block_reward": self.block_reward,
         }, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
 
@@ -58,6 +74,8 @@ class Block:
             "prev_hash": self.prev_hash,
             "validator": self.validator,
             "state_root": self.state_root,
+            "total_fees": self.total_fees,
+            "block_reward": self.block_reward,
             "merkle_root": self.merkle_root,
             "block_signature": self.block_signature,
             "hash": self.hash
