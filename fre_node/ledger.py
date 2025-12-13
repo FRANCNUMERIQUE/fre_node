@@ -1,9 +1,9 @@
-import json
+﻿import json
 import os
-from .config import CHAIN_FILE
+from .config import CHAIN_FILE, BLOCK_REWARD
 from .block import Block
 from .validator_set import load_validators, select_producer, get_pubkey
-from .utils import verify_signature_raw
+from .utils import verify_signature_raw, compute_tx_id
 
 
 class Ledger:
@@ -51,6 +51,8 @@ class Ledger:
         validator = blk.get("validator", blk.get("node", "genesis"))
         state_root = blk.get("state_root", blk.get("stateRoot", ""))
         merkle_root = blk.get("merkle_root")
+        total_fees = blk.get("total_fees", 0)
+        block_reward = blk.get("block_reward", 0)
 
         normalized = {
             "index": blk.get("index", 0),
@@ -59,6 +61,8 @@ class Ledger:
             "prev_hash": prev_hash,
             "validator": validator,
             "state_root": state_root,
+            "total_fees": total_fees,
+            "block_reward": block_reward,
             "merkle_root": merkle_root,
             "block_signature": blk.get("block_signature"),
         }
@@ -94,7 +98,7 @@ class Ledger:
 
     def truncate(self, height: int):
         """
-        Coupe la chaîne au height indiqué (conservé), rewrite chain.json
+        Coupe la chaine au height indiqué (conserve), rewrite chain.json
         """
         if height < 0:
             self.chain = []
@@ -147,9 +151,26 @@ class Ledger:
                 state_root=blk.get("state_root", ""),
                 merkle_root=blk.get("merkle_root"),
                 block_signature=blk.get("block_signature"),
+                total_fees=blk.get("total_fees", 0),
+                block_reward=blk.get("block_reward", 0),
             )
         except Exception:
             print("[LEDGER] Malformed block")
+            return False
+
+        # recalcul fees to compare
+        fees_sum = sum(tx.get("fee", 0) for tx in blk.get("txs", []))
+        if blk.get("total_fees", 0) != fees_sum:
+            print("[LEDGER] Invalid total_fees")
+            return False
+        if blk.get("block_reward", 0) != (BLOCK_REWARD if BLOCK_REWARD else 0):
+            print("[LEDGER] Invalid block_reward")
+            return False
+
+        # deduplicate TX in block
+        tx_ids = [compute_tx_id(tx) for tx in blk.get("txs", [])]
+        if len(tx_ids) != len(set(tx_ids)):
+            print("[LEDGER] Duplicate transactions in block")
             return False
 
         if blk.get("merkle_root") and blk.get("merkle_root") != block_obj.merkle_root:
@@ -162,7 +183,7 @@ class Ledger:
 
         # producer check + signature (skip genesis)
         if blk.get("index", 0) > 0:
-            expected_producer = select_producer(blk["index"], self.validators)
+            expected_producer = select_producer(blk["index"], self.validators, weighted=True)
             if blk.get("validator") != expected_producer:
                 print("[LEDGER] Invalid producer")
                 return False
@@ -188,7 +209,17 @@ class Ledger:
                 state_root=blk.get("state_root", ""),
                 merkle_root=blk.get("merkle_root"),
                 block_signature=blk.get("block_signature"),
+                total_fees=blk.get("total_fees", 0),
+                block_reward=blk.get("block_reward", 0),
             )
+            tx_ids = [compute_tx_id(tx) for tx in blk.get("txs", [])]
+            if len(tx_ids) != len(set(tx_ids)):
+                raise ValueError(f"Block #{i} contains duplicate tx")
+            fees_sum = sum(tx.get("fee", 0) for tx in blk.get("txs", []))
+            if blk.get("total_fees", 0) != fees_sum:
+                raise ValueError(f"Block #{i} invalid total_fees")
+            if blk.get("block_reward", 0) != (BLOCK_REWARD if BLOCK_REWARD else 0):
+                raise ValueError(f"Block #{i} invalid block_reward")
 
             if blk.get("merkle_root") and blk.get("merkle_root") != block_obj.merkle_root:
                 raise ValueError(f"Block #{i} invalid merkle_root")
@@ -200,7 +231,7 @@ class Ledger:
                 raise ValueError(f"Block #{i} invalid chain link")
 
             if blk.get("index", 0) > 0:
-                expected_producer = select_producer(blk["index"], self.validators)
+                expected_producer = select_producer(blk["index"], self.validators, weighted=True)
                 if blk.get("validator") != expected_producer:
                     raise ValueError(f"Block #{i} invalid producer")
 

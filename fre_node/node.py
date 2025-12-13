@@ -19,7 +19,7 @@ from .consensus import Consensus
 from .network_ws import P2PNode
 from .validator import Validator
 from .block import Block
-from .validator_set import load_validators
+from .validator_set import load_validators, get_pubkey
 from .snapshot_manager import load_snapshot
 from .state import State
 from .utils import verify_signature_raw
@@ -166,13 +166,14 @@ class FRENode:
         return 1
 
     def _block_to_header(self, blk: dict):
+        pubkey = get_pubkey(self.validators, blk.get("validator", ""))
         return {
             "height": blk["index"],
             "prev_hash": blk["prev_hash"],
             "block_hash": blk["hash"],
             "merkle_root": blk.get("merkle_root", ""),
             "state_root": blk.get("state_root", ""),
-            "producer": blk.get("validator", ""),
+            "producer": pubkey or blk.get("validator", ""),
             "timestamp": blk.get("timestamp", ""),
             "signature": blk.get("block_signature", ""),
         }
@@ -186,18 +187,9 @@ class FRENode:
                 return False
             if header["height"] != prev_header["height"] + 1:
                 return False
-        payload = {
-            "height": header["height"],
-            "prev_hash": header["prev_hash"],
-            "block_hash": header["block_hash"],
-            "merkle_root": header["merkle_root"],
-            "state_root": header["state_root"],
-            "producer": header["producer"],
-            "timestamp": header["timestamp"],
-        }
         try:
-            raw = json.dumps(payload, sort_keys=True).encode()
-            return verify_signature_raw(header["producer"], raw, header["signature"])
+            # signature porte sur le hash du bloc, vérifiée avec la pubkey du producteur
+            return verify_signature_raw(header["producer"], header["block_hash"].encode(), header["signature"])
         except Exception:
             return False
 

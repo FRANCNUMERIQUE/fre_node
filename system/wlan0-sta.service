@@ -1,0 +1,12 @@
+[Unit]
+Description=Create wlan0_sta interface for concurrent AP + client
+After=sys-subsystem-net-devices-wlan0.device
+Before=wpa_supplicant@wlan0_sta.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/env bash -c 'iw dev wlan0 interface add wlan0_sta type station 2>/dev/null || true'
+
+[Install]
+WantedBy=multi-user.target

@@ -1,4 +1,4 @@
-import base64
+﻿import base64
 import hashlib
 import os
 from nacl.signing import SigningKey, VerifyKey
@@ -51,7 +51,7 @@ def compute_tx_id(tx: dict) -> str:
     return hashlib.sha256(msg + sig_bytes).hexdigest()
 
 # ===========================
-# TON STRICT — CRC16
+# TON STRICT – CRC16
 # ===========================
 
 def crc16_ton(data: bytes) -> bytes:
@@ -134,15 +134,9 @@ def verify_signature(pubkey_hash: bytes, message: bytes, signature: str, pubkey:
         except Exception:
             return False
 
-    # Fallback rétrocompatible (faible sécurité) : contrôle sur hash tronqué
-    try:
-        return hashlib.sha256(message).digest().startswith(pubkey_hash[:4])
-    except Exception:
-        return False
+    # Sans pubkey fournie : refuser (pas de fallback faible)
+    return False
 
-# ===========================
-# SIGNATURE BRUTE ED25519 (bloc)
-# ===========================
 
 def verify_signature_raw(pubkey_b64: str, message: bytes, signature_b64: str) -> bool:
     try:
@@ -153,5 +147,23 @@ def verify_signature_raw(pubkey_b64: str, message: bytes, signature_b64: str) ->
     except Exception:
         return False
 
-def load_signing_key(privkey_b64: str) -> SigningKey:
-    return SigningKey(b64url_decode(privkey_b64))
+
+# ===========================
+# CHARGE SIGNING KEY (P2P/VALIDATOR)
+# ===========================
+
+def load_signing_key(priv_b64: str) -> SigningKey:
+    padded = priv_b64 + "=" * ((4 - len(priv_b64) % 4) % 4)
+    return SigningKey(base64.urlsafe_b64decode(padded))
+
+# ===========================
+# P2P SIGN/VERIFY
+# ===========================
+
+def sign_message_raw(priv_b64: str, message: bytes) -> str:
+    return sign_message(load_signing_key(priv_b64), message)
+
+
+def verify_signature_p2p(pubkey_b64: str, message: bytes, signature_b64: str) -> bool:
+    return verify_signature_raw(pubkey_b64, message, signature_b64)
+

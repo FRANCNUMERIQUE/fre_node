@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>FRE Node - Profil Validateur</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { background:#0d1117; color:#e6edf3; font-family:"Segoe UI", Roboto, sans-serif; margin:0; padding:0;}
+        .container { max-width:1100px; margin:20px auto; padding:0 16px; }
+        h1 { color:#58a6ff; text-align:center; margin-bottom:8px; }
+        .subtitle { text-align:center; color:#8b949e; margin-bottom:20px; }
+        .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); }
+        .card { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:14px; }
+        label { display:block; margin:8px 0 4px; color:#8b949e; }
+        input, textarea { width:100%; padding:8px; border-radius:6px; border:1px solid #30363d; background:#0d1117; color:#e6edf3; }
+        button { background:#238636; border:none; color:white; padding:10px 14px; border-radius:8px; cursor:pointer; margin-right:8px; margin-top:8px;}
+        button.secondary { background:#30363d; }
+        pre { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px; min-height:120px; overflow:auto; }
+        .status { font-size:14px; color:#8b949e; margin-top:6px; }
+        .modal-backdrop { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; }
+        .modal { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:20px; max-width:380px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+        .hidden { display:none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Profil Validateur</h1>
+    <div class="subtitle">Configurer l'identite, les cles et actions du node</div>
+
+    <!-- Token admin -->
+    <div class="card">
+        <label>Token administrateur</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="token" type="text" placeholder="Coller le token admin (ou utiliser le popup de generation)" style="flex:1;">
+          <button class="secondary" id="copyToken">Copier</button>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="saveToken">Enregistrer</button>
+            <button class="secondary" id="clearToken">Effacer</button>
+        </div>
+        <div class="status" id="tokenStatus"></div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Identite / Cles</h3>
+            <label>Nom du validateur</label>
+            <input id="valName" type="text" placeholder="fre-node-01">
+            <label>Clee publique (base64url)</label>
+            <textarea id="valPub" rows="2" placeholder="clee publique"></textarea>
+            <label>Clee privee (base64url)</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input id="valPriv" type="password" placeholder="clee privee" style="flex:1;">
+              <button class="secondary" id="togglePriv">👁️</button>
+            </div>
+            <label>Stake</label>
+            <input id="valStake" type="number" value="1" min="1">
+            <div class="status" id="valStatus"></div>
+            <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="secondary" id="generateKeys">Generer</button>
+                <button id="saveValidator">Enregistrer</button>
+                <button class="secondary" id="regenerateKeys">Re-generer</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Statut Node / Services</h3>
+            <button class="secondary" id="refreshStatus">Rafraichir</button>
+            <pre id="quickStatus">...</pre>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Wi-Fi domestique</h3>
+            <label>SSID</label>
+            <input id="wifiSsid" type="text" placeholder="MaBox">
+            <label>Mot de passe</label>
+            <input id="wifiPass" type="password" placeholder="********">
+            <button class="secondary" id="saveWifi">Enregistrer (local)</button>
+            <button class="secondary" id="applyWifi">Appliquer (bascule client)</button>
+            <button class="secondary" id="applyWifiSta">Appliquer AP+STA</button>
+            <div class="status" id="wifiStatus"></div>
+            <p style="color:#8b949e; font-size:13px; margin-top:8px;">Conserve ces infos cote navigateur pour les utiliser plus tard (configuration manuelle ou future API).</p>
+        </div>
+        <div class="card">
+            <h3>Wallet TON</h3>
+            <label>Adresse TON</label>
+            <input id="tonAddr" type="text" placeholder="EQ...">
+            <button class="secondary" id="saveTon">Lier (local)</button>
+            <div class="status" id="tonStatus"></div>
+            <p style="color:#8b949e; font-size:13px; margin-top:8px;">Stocke localement pour les futures actions (ancrage, recompenses).</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Commandes principales</h3>
+        <button class="secondary" id="restartNode">Redemarrer fre_node</button>
+        <button class="secondary" id="restartDash">Redemarrer fre_dashboard</button>
+        <button class="secondary" id="runUpdate">Forcer update</button>
+        <div class="status" id="actionStatus"></div>
+    </div>
+
+    <div class="card">
+        <h3>Recompenses / Infos</h3>
+        <pre id="rewardsBox">A venir : affichage des rewards et fees collectees.</pre>
+    </div>
+
+    <div class="card">
+        <h3>Journal des operations</h3>
+        <pre id="logOutput">Pret.</pre>
+    </div>
+</div>
+
+<script>
+  const apiBase = "{{ api_base }}";
+</script>
+<script src="/static/validator.js"></script>
+
+<!-- Modal de connexion / generation token -->
+<div class="modal-backdrop hidden" id="tokenModal">
+  <div class="modal">
+    <h3>Acces administrateur</h3>
+    <p id="tokenModalInfo" style="color:#8b949e; font-size:14px;">Ce noeud doit avoir un token admin. S'il n'existe pas, genere-le depuis cette fenetre.</p>
+    <input id="tokenModalInput" type="text" placeholder="Token admin">
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button id="generateAdminToken">Generer le token</button>
+      <button class="secondary" id="tokenModalSave">Valider le token</button>
+      <button class="secondary" id="tokenModalCancel">Fermer</button>
+    </div>
+    <div class="status" id="tokenModalStatus"></div>
+  </div>
+</div>
+
+<div style="text-align:center; margin:16px 0;">
+  <a href="/" style="color:#58a6ff; text-decoration:none; border:1px solid #30363d; padding:6px 10px; border-radius:8px;">Retour Dashboard</a>
+</div>
+</body>
+</html>

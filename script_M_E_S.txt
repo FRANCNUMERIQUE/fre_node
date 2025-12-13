@@ -1,0 +1,41 @@
+Mise en service initiale (FRE Node)
+1) Démarrer le nœud
+   - Brancher et patienter ~30s.
+   - Hotspot Wi‑Fi : SSID = FRE_NODE_01, mot de passe = frevalidator, IP AP = 192.168.50.1.
+
+2) Connexion au hotspot
+   - Se connecter au Wi‑Fi FRE_NODE_01.
+   - Ouvrir http://192.168.50.1 (ou http://fre-node.local).
+   - Vérifier le dashboard (statut, bloc genesis).
+
+3) Profil validateur / Token admin
+   - Aller sur http://192.168.50.1/validator.
+   - Si aucun token admin n’existe, utiliser le popup pour le générer puis l’enregistrer (stocké localement).
+   - Sinon, coller le token admin existant puis « Enregistrer ».
+
+4) Identité / Clés
+   - Générer des clés (local) ou coller clé publique/privée (base64url).
+   - Renseigner nom et stake.
+   - Cliquer sur « Enregistrer » pour pousser au nœud.
+
+5) Wi‑Fi domestique (si besoin de lier à ton réseau)
+   - Remplir SSID/mot de passe dans « Wi‑Fi domestique » (stocké dans le navigateur).
+   - Pour basculer en client : appliquer manuellement ou via config `/etc/wpa_supplicant/wpa_supplicant-wlan0_sta.conf` (mode AP+STA).
+
+6) Wallet TON (optionnel)
+   - Coller l’adresse TON, « Lier (local) » (stocké côté navigateur).
+
+7) Commandes principales
+   - Redémarrer fre_node / fre_dashboard
+   - Forcer update (exécute update_node.sh)
+   - Suivre les retours dans « Journal des opérations ».
+
+8) Vérifications
+   - Dashboard : blocs, mempool, CPU/RAM.
+   - Profil : « Statut Node / Services » → « Rafraîchir ».
+
+Compléments
+- Token : stocké dans le navigateur, effaçable via bouton ou modal.
+- Clés : génération locale (WebCrypto), fallback backend.
+- Wi‑Fi domestique et Wallet TON : stockage local uniquement pour l’instant.
+- Récompenses / Infos : affichage en attente côté backend.

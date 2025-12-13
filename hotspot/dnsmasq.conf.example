@@ -1,0 +1,13 @@
+# DHCP + DNS pour le réseau privé hotspot
+interface=wlan0
+bind-interfaces
+dhcp-range=192.168.50.50,192.168.50.150,12h
+dhcp-option=3,192.168.50.1
+dhcp-option=6,192.168.50.1
+dhcp-authoritative
+dhcp-leasefile=/var/lib/misc/dnsmasq.leases
+log-dhcp
+domain-needed
+bogus-priv
+# Résolution mDNS locale
+address=/fre-node.local/192.168.50.1

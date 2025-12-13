@@ -1,10 +1,9 @@
+import time
 from datetime import datetime
-import json
 from .block import Block
-import os
-from .config import MAX_TX_PER_BLOCK, NODE_NAME, BLOCK_REWARD, VALIDATOR_PRIVKEY_ENV, ANCHOR_FREQUENCY_BLOCKS, SNAPSHOT_INTERVAL
-from .utils import load_signing_key, sign_message
-from .validator_set import load_validators, select_producer
+from .config import MAX_TX_PER_BLOCK, NODE_NAME, BLOCK_REWARD, VALIDATOR_PRIVKEY_ENV, ANCHOR_FREQUENCY_BLOCKS, SNAPSHOT_INTERVAL, VALIDATOR
+from .utils import load_signing_key, sign_message, verify_signature_raw
+from .validator_set import load_validators, select_producer, get_pubkey
 from .ton_anchor import anchor_client
 from .snapshot_manager import save_snapshot
 from .state import get_global_state
@@ -58,23 +57,26 @@ class Consensus:
             # les transactions invalides sont ignorées, non rejouées
 
         reward_total = total_fees + (BLOCK_REWARD if BLOCK_REWARD else 0)
+        producer_name = VALIDATOR.get("name", NODE_NAME)
         if reward_total > 0:
-            self.state.credit(NODE_NAME, reward_total)
+            self.state.credit(producer_name, reward_total)
 
         state_root = self.state.compute_state_root()
 
         height = prev_block["index"] + 1 if prev_block else 0
-        expected_producer = select_producer(height, self.validators)
-        if expected_producer != NODE_NAME:
+        expected_producer = select_producer(height, self.validators, weighted=True)
+        if expected_producer != producer_name:
             return None  # ce node n'est pas producteur pour ce slot
 
         new_block = Block(
-            index=(prev_block["index"] + 1 if prev_block else 0),
-            timestamp=datetime.utcnow().isoformat(),
+            index=height,
+            timestamp=int(time.time()),
             txs=applied_txs,
             prev_hash=prev_hash,
-            validator=NODE_NAME,
-            state_root=state_root
+            validator=producer_name,
+            state_root=state_root,
+            total_fees=total_fees,
+            block_reward=(BLOCK_REWARD if BLOCK_REWARD else 0),
         )
 
         # Signature du bloc par le producteur
@@ -131,5 +133,19 @@ class Consensus:
 
         if block_obj.hash != block["hash"]:
             return False
+
+        # Producer selection + signature (skip genesis)
+        if block_obj.index > 0:
+            validators = load_validators()
+            expected = select_producer(block_obj.index, validators)
+            if block_obj.validator != expected:
+                return False
+
+            pubkey = get_pubkey(validators, block_obj.validator)
+            sig = block.get("block_signature")
+            if not pubkey or not sig:
+                return False
+            if not verify_signature_raw(pubkey, block_obj.hash.encode(), sig):
+                return False
 
         return True

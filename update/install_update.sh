@@ -1,36 +1,173 @@
 #!/bin/bash
 
-echo "[UPDATE] Installation du gestionnaire de mises à jour..."
+echo "[UPDATE] Installing update manager..."
 
 SCRIPT_DIR="$(dirname $(realpath $0))"
 
-# Nettoie les entrées existantes pour update_node.sh puis ajoute le cron quotidien à 02:00 UTC
+# Cron daily at 02:00 UTC
 crontab -l 2>/dev/null | grep -v "update_node.sh" > mycron
 echo "CRON_TZ=UTC" >> mycron
 echo "0 2 * * * bash $SCRIPT_DIR/update_node.sh >> $SCRIPT_DIR/update.log 2>&1" >> mycron
 crontab mycron
 rm mycron
 
-echo "[UPDATE] Mise à jour automatique activée (02:00 UTC)."
+echo "[UPDATE] Auto-update enabled (02:00 UTC)."
 
-echo "[INSTALL] Installation / Mise à jour des services FRE..."
+echo "[INSTALL] Installing/updating FRE services..."
 
-# Installation du service du node
-sudo cp $SCRIPT_DIR/../system/fre_node.service /etc/systemd/system/fre_node.service
+# Services
+sudo cp "$SCRIPT_DIR/../system/fre_node.service" /etc/systemd/system/fre_node.service
+sudo cp "$SCRIPT_DIR/../system/fre_dashboard.service" /etc/systemd/system/fre_dashboard.service
+[ -f "$SCRIPT_DIR/../system/fre_portal.service" ] && sudo cp "$SCRIPT_DIR/../system/fre_portal.service" /etc/systemd/system/fre_portal.service
+[ -f "$SCRIPT_DIR/../system/wlan0-sta.service" ] && sudo cp "$SCRIPT_DIR/../system/wlan0-sta.service" /etc/systemd/system/wlan0-sta.service
+[ -f "$SCRIPT_DIR/../system/fre_nat.service" ] && sudo cp "$SCRIPT_DIR/../system/fre_nat.service" /etc/systemd/system/fre_nat.service
+[ -f "$SCRIPT_DIR/../system/dhclient-wlan0_sta.service" ] && sudo cp "$SCRIPT_DIR/../system/dhclient-wlan0_sta.service" /etc/systemd/system/dhclient-wlan0_sta.service
 
-# Installation du service du dashboard
-sudo cp $SCRIPT_DIR/../system/fre_dashboard.service /etc/systemd/system/fre_dashboard.service
+# Hotspot dependencies
+echo "[INSTALL] Installing hostapd/dnsmasq/avahi/tcpdump/isc-dhcp-client..."
+sudo apt-get update -y
+sudo apt-get install -y hostapd dnsmasq avahi-daemon tcpdump isc-dhcp-client
 
-# Rechargement de systemd
+# Unmask services
+sudo systemctl unmask hostapd 2>/dev/null || true
+sudo systemctl unmask dnsmasq 2>/dev/null || true
+
+# Stop/disable wpa_supplicant on wlan0 (avoid client takeover)
+sudo systemctl stop wpa_supplicant@wlan0.service 2>/dev/null || true
+sudo systemctl disable wpa_supplicant@wlan0.service 2>/dev/null || true
+# Stop/disable global wpa_supplicant (certain images utilisent l'instance globale)
+sudo systemctl stop wpa_supplicant.service 2>/dev/null || true
+sudo systemctl disable wpa_supplicant.service 2>/dev/null || true
+# Si NetworkManager est present, rendre wlan0 unmanaged
+if command -v nmcli >/dev/null 2>&1; then
+  sudo nmcli dev set wlan0 managed no 2>/dev/null || true
+  sudo nmcli dev disconnect wlan0 2>/dev/null || true
+fi
+
+# Unblock RF if blocked
+rfkill list 2>/dev/null | grep -q "Soft blocked: yes" && sudo rfkill unblock all || true
+
+# hostapd config (remplace en conservant un backup)
+if [ -f "$SCRIPT_DIR/../hotspot/hostapd.conf.example" ]; then
+  [ -f /etc/hostapd/hostapd.conf ] && sudo cp /etc/hostapd/hostapd.conf /etc/hostapd/hostapd.conf.bak 2>/dev/null || true
+  sudo cp "$SCRIPT_DIR/../hotspot/hostapd.conf.example" /etc/hostapd/hostapd.conf
+fi
+cat <<'EOF' | sudo tee /etc/default/hostapd >/dev/null
+# FRE Node hotspot defaults
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+DAEMON_OPTS=""
+EOF
+
+# dnsmasq config
+if [ -f "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" ]; then
+  [ -f /etc/dnsmasq.conf ] && sudo cp /etc/dnsmasq.conf /etc/dnsmasq.conf.bak 2>/dev/null || true
+  sudo cp "$SCRIPT_DIR/../hotspot/dnsmasq.conf.example" /etc/dnsmasq.conf
+fi
+
+# wpa_supplicant conf (station sur interface virtuelle wlan0_sta)
+if [ -f "$SCRIPT_DIR/../hotspot/wpa_supplicant-wlan0_sta.conf.example" ]; then
+  sudo cp "$SCRIPT_DIR/../hotspot/wpa_supplicant-wlan0_sta.conf.example" /etc/wpa_supplicant/wpa_supplicant-wlan0_sta.conf
+fi
+# Ensure wpa_supplicant@wlan0_sta depends on interface creation
+sudo mkdir -p /etc/systemd/system/wpa_supplicant@wlan0_sta.service.d
+cat <<'EOF' | sudo tee /etc/systemd/system/wpa_supplicant@wlan0_sta.service.d/override.conf >/dev/null
+[Unit]
+After=wlan0-sta.service
+Requires=wlan0-sta.service
+EOF
+
+# Static IP on wlan0
+if systemctl list-unit-files | grep -q systemd-networkd.service; then
+  sudo systemctl enable --now systemd-networkd 2>/dev/null || true
+fi
+
+if systemctl is-active --quiet systemd-networkd; then
+  if [ ! -f /etc/systemd/network/10-fre-hotspot.network ]; then
+    cat <<'EOF' | sudo tee /etc/systemd/network/10-fre-hotspot.network >/dev/null
+[Match]
+Name=wlan0
+
+[Network]
+Address=192.168.50.1/24
+DNS=192.168.50.1
+DHCP=no
+EOF
+  fi
+  sudo systemctl restart systemd-networkd || true
+else
+  if ! grep -q "FRE_NODE hotspot" /etc/dhcpcd.conf 2>/dev/null; then
+    cat <<'EOF' | sudo tee -a /etc/dhcpcd.conf >/dev/null
+
+# FRE_NODE hotspot
+denyinterfaces wlan0
+interface wlan0
+static ip_address=192.168.50.1/24
+nohook wpa_supplicant
+EOF
+  fi
+  if systemctl list-unit-files | grep -q dhcpcd.service; then
+    sudo systemctl restart dhcpcd || true
+  fi
+fi
+
+# Force address immediately on wlan0
+sudo ip addr flush dev wlan0 2>/dev/null || true
+sudo ip addr add 192.168.50.1/24 dev wlan0 2>/dev/null || true
+sudo ip link set wlan0 up 2>/dev/null || true
+# Stop any dhclient on wlan0
+pgrep -fa "dhclient.*wlan0" && sudo pkill -f "dhclient.*wlan0" || true
+
+# Flush firewall (iptables/nft) to ensure DHCP/HTTP are reachable on wlan0
+sudo iptables -F
+sudo iptables -t nat -F
+sudo nft flush ruleset 2>/dev/null || true
+
+# Enable forwarding + NAT via wlan0_sta when present
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo iptables -t nat -C POSTROUTING -o wlan0_sta -j MASQUERADE 2>/dev/null || sudo iptables -t nat -A POSTROUTING -o wlan0_sta -j MASQUERADE
+
+# Reload systemd
 sudo systemctl daemon-reload
 
-# Activation des services
+# Enable services
 sudo systemctl enable fre_node.service
 sudo systemctl enable fre_dashboard.service
+[ -f /etc/systemd/system/fre_portal.service ] && sudo systemctl enable fre_portal.service
+sudo systemctl enable hostapd
+sudo systemctl enable dnsmasq
+sudo systemctl enable avahi-daemon
+sudo systemctl enable wpa_supplicant@wlan0_sta.service 2>/dev/null || true
+sudo systemctl enable wlan0-sta.service 2>/dev/null || true
+sudo systemctl enable fre_nat.service 2>/dev/null || true
+sudo systemctl enable dhclient-wlan0_sta.service 2>/dev/null || true
 
-# Redémarrage des services
+# dnsmasq drop-in to attendre hostapd/wlan0
+sudo mkdir -p /etc/systemd/system/dnsmasq.service.d
+cat <<'EOF' | sudo tee /etc/systemd/system/dnsmasq.service.d/after-hostapd.conf >/dev/null
+[Unit]
+After=hostapd.service wlan0-sta.service
+Wants=hostapd.service
+
+[Service]
+Restart=on-failure
+RestartSec=3
+ExecStartPre=/usr/bin/env bash -c 'ip link show wlan0 >/dev/null 2>&1 && ip addr show wlan0 | grep -q 192.168.50 || exit 1'
+EOF
+
+# Reload units pour prendre en compte les drop-ins
+sudo systemctl daemon-reload
+
+# Restart services
 sudo systemctl restart fre_node.service
 sudo systemctl restart fre_dashboard.service
+[ -f /etc/systemd/system/fre_portal.service ] && sudo systemctl restart fre_portal.service
+sudo systemctl restart hostapd
+sudo systemctl restart dnsmasq
+sudo systemctl restart avahi-daemon
+sudo systemctl restart wlan0-sta.service 2>/dev/null || true
+sudo systemctl restart wpa_supplicant@wlan0_sta.service 2>/dev/null || true
+sudo systemctl restart fre_nat.service 2>/dev/null || true
+sudo systemctl restart dhclient-wlan0_sta.service 2>/dev/null || true
 
-echo "[INSTALL] Services FRE installés et démarrés."
-echo "[DONE] Installation complète terminée."
+echo "[INSTALL] FRE services installed and started."
+echo "[DONE] Install complete."

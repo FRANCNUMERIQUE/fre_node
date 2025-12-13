@@ -40,6 +40,16 @@ async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+@app.get("/admin", response_class=HTMLResponse)
+async def admin(request: Request):
+    return templates.TemplateResponse("admin.html", {"request": request, "api_base": node_api_url})
+
+
+@app.get("/validator", response_class=HTMLResponse)
+async def validator(request: Request):
+    return templates.TemplateResponse("validator.html", {"request": request, "api_base": node_api_url})
+
+
 # ============================================
 #   🔥🔥🔥  ROUTES API (AJOUT MINIMAL)
 # ============================================
