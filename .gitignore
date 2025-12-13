@@ -1,0 +1,13 @@
+# Cache et artefacts temporaires
+__pycache__/
+*.pyc
+
+# Dossiers et fichiers locaux non suivis
+backup/
+commit
+push
+fre_node/db/validator_secret.json
+update/cron.log
+update/update.log
+dashboard/__pycache__/
+fre_node/__pycache__/
