@@ -1,15 +1,58 @@
+# fre_node.service
+sudo tee /etc/systemd/system/fre_node.service >/dev/null <<'EOF'
 [Unit]
 Description=FRE Layer 2 Node
 After=network-online.target
 
 [Service]
-User=aliasvava
+User=fre
+Group=fre
 WorkingDirectory=/home/aliasvava/fre_node
 Environment=PYTHONPATH=/home/aliasvava/fre_node
-# Token admin pour /admin/update (à remplacer et gérer en override si besoin)
-Environment=FRE_ADMIN_TOKEN=f83279d1d07305e670bb743ee4d28edefd96b19f025246eaaa5d07700e3a491c
 ExecStart=/home/aliasvava/fre_node/venv/bin/python3 /home/aliasvava/fre_node/main.py
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
+EOF
+
+# fre_dashboard.service
+sudo tee /etc/systemd/system/fre_dashboard.service >/dev/null <<'EOF'
+[Unit]
+Description=FRE Node Dashboard
+After=network-online.target
+
+[Service]
+User=fre
+Group=fre
+WorkingDirectory=/home/aliasvava/fre_node
+Environment=PYTHONPATH=/home/aliasvava/fre_node
+ExecStart=/home/aliasvava/fre_node/venv/bin/python3 /home/aliasvava/fre_node/dashboard/dashboard.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# fre_portal.service (si tu l’utilises)
+sudo tee /etc/systemd/system/fre_portal.service >/dev/null <<'EOF'
+[Unit]
+Description=FRE Node Portal (dashboard on port 80)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=fre
+Group=fre
+WorkingDirectory=/home/aliasvava/fre_node
+ExecStart=/bin/bash -lc 'cd /home/aliasvava/fre_node && /home/aliasvava/fre_node/venv/bin/uvicorn dashboard.dashboard:app --host 0.0.0.0 --port 80'
+Restart=always
+Environment="PYTHONUNBUFFERED=1"
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
